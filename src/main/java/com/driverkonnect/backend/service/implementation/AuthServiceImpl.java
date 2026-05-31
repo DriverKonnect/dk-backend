@@ -9,7 +9,6 @@ import com.driverkonnect.backend.entity.User;
 import com.driverkonnect.backend.exception.CustomException;
 import com.driverkonnect.backend.repository.UserRepository;
 import com.driverkonnect.backend.service.AuthService;
-import com.driverkonnect.backend.service.RefreshTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
