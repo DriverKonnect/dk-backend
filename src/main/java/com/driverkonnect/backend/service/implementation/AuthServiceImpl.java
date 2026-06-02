@@ -7,8 +7,10 @@ import com.driverkonnect.backend.dto.response.user.UserResponseDto;
 import com.driverkonnect.backend.entity.RefreshToken;
 import com.driverkonnect.backend.entity.User;
 import com.driverkonnect.backend.exception.CustomException;
+import com.driverkonnect.backend.repository.DriverApplicationRepository;
 import com.driverkonnect.backend.repository.UserRepository;
 import com.driverkonnect.backend.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,22 +20,15 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
+    private final DriverApplicationRepository driverApplicationRepository;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager,
-                           JwtService jwtService,
-                           UserRepository userRepository,
-                           RefreshTokenService refreshTokenService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.userRepository = userRepository;
-        this.refreshTokenService = refreshTokenService;
-    }
 
     @Override
     public TokenPairDto login(LoginRequestDto request) {
@@ -90,6 +85,12 @@ public class AuthServiceImpl implements AuthService {
         dto.setEmail(user.getEmail());
         dto.setUserRole(user.getUserRole().getRole());
         dto.setIsFirstLogin(user.getIsFirstLogin());
+
+        if ("DRIVER".equals(user.getUserRole().getRole())) {
+            driverApplicationRepository.findByUser_Email(user.getEmail())
+                    .ifPresent(app -> dto.setApplicationStatus(app.getStatus().name()));
+        }
+
         return dto;
     }
 }
