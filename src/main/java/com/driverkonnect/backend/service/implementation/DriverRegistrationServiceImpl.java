@@ -64,6 +64,8 @@ public class DriverRegistrationServiceImpl implements DriverRegistrationService 
                 .orElseThrow(() -> new CustomException("DRIVER role not configured", 500));
 
         User user = new User();
+        user.setFirstName(request.getFirstName().strip());
+        user.setLastName(request.getLastName().strip());
         user.setUsername(email);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));

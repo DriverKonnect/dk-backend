@@ -15,6 +15,12 @@ import java.util.List;
 @NoArgsConstructor
 public class DriverRegisterRequestDto {
 
+    @NotBlank(message = "First name is required")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    private String lastName;
+
     @NotBlank(message = "Full name is required")
     private String fullName;
 
