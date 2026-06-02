@@ -15,4 +15,5 @@ public class UserResponseDto {
     private String email;
     private String userRole;
     private Boolean isFirstLogin;
+    private String applicationStatus;
 }
