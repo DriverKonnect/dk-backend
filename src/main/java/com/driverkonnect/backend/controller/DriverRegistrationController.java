@@ -10,6 +10,7 @@ import com.driverkonnect.backend.service.DriverRegistrationService;
 import com.driverkonnect.backend.util.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/driver")
 public class DriverRegistrationController {
@@ -43,12 +45,13 @@ public class DriverRegistrationController {
     public ResponseEntity<Response<DriverApplicationResponseDto>> register(
             @Valid @RequestBody DriverRegisterRequestDto request,
             HttpServletResponse response) {
+        log.info("POST /api/driver/register - registration request received for email: {}", request.getEmail());
         DriverApplicationResponseDto result = driverRegistrationService.register(request);
-
         TokenPairDto tokens = authService.login(
                 new LoginRequestDto(request.getEmail(), request.getPassword()));
         setTokenCookies(response, tokens.getAccessToken(), tokens.getRefreshToken());
-
+        log.info("POST /api/driver/register - registration completed for email: {}, applicationId: {}",
+                request.getEmail(), result.getId());
         return ResponseUtil.created(result, "Registration submitted successfully");
     }
 
@@ -59,14 +62,18 @@ public class DriverRegistrationController {
             @RequestParam("licenceFront") MultipartFile licenceFront,
             @RequestParam("licenceBack") MultipartFile licenceBack,
             @RequestParam("policeClearance") MultipartFile policeClearance) {
+        log.info("POST /api/driver/register/{}/documents - document upload request received", applicationId);
         DriverApplicationResponseDto result = driverRegistrationService.uploadDocuments(
                 applicationId, licenceFront, licenceBack, policeClearance);
+        log.info("POST /api/driver/register/{}/documents - documents uploaded successfully", applicationId);
         return ResponseUtil.success(result, "Documents uploaded successfully. Application is now under review.");
     }
 
     @GetMapping("/application/me")
     public ResponseEntity<Response<DriverApplicationResponseDto>> getMyApplication() {
+        log.info("GET /api/driver/application/me - request received");
         DriverApplicationResponseDto result = driverRegistrationService.getMyApplication();
+        log.info("GET /api/driver/application/me - completed successfully, applicationId: {}", result.getId());
         return ResponseUtil.success(result, "Application retrieved successfully");
     }
 

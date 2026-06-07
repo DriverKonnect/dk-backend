@@ -11,6 +11,7 @@ import com.driverkonnect.backend.repository.DriverApplicationRepository;
 import com.driverkonnect.backend.repository.UserRepository;
 import com.driverkonnect.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -29,10 +31,10 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final DriverApplicationRepository driverApplicationRepository;
 
-
     @Override
     public TokenPairDto login(LoginRequestDto request) {
         request.setEmail(request.getEmail().strip().toLowerCase());
+        log.debug("Authenticating user with email: {}", request.getEmail());
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -41,17 +43,18 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmailAndIsActiveTrue(request.getEmail())
                 .orElseThrow();
 
-        String accessToken = jwtService.generateToken(
-                user.getUsername(),
-                user.getUserRole().getRole());
-
+        log.debug("Authentication successful, generating tokens for user: {}", user.getUsername());
+        String accessToken = jwtService.generateToken(user.getUsername(), user.getUserRole().getRole());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
+        log.debug("Tokens generated successfully for user: {}", user.getUsername());
 
         return new TokenPairDto(accessToken, refreshToken.getToken(), toUserResponseDto(user));
     }
 
     @Override
     public TokenPairDto refreshAccessToken(String refreshTokenValue) {
+        log.debug("Processing access token refresh");
+
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new CustomException("Refresh token not found",
                         HttpStatus.NOT_FOUND.value()));
@@ -59,9 +62,9 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
-        String newAccessToken = jwtService.generateToken(
-                user.getUsername(), user.getUserRole().getRole());
+        log.debug("Refresh token valid, generating new access token for user: {}", user.getUsername());
 
+        String newAccessToken = jwtService.generateToken(user.getUsername(), user.getUserRole().getRole());
         return new TokenPairDto(newAccessToken, refreshToken.getToken(), toUserResponseDto(user));
     }
 
@@ -69,11 +72,13 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String refreshTokenValue) {
         String username = Objects.requireNonNull(
                 SecurityContextHolder.getContext().getAuthentication()).getName();
+        log.debug("Processing logout for user: {}", username);
 
         refreshTokenService.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new CustomException("User is already logged out", 400));
 
         refreshTokenService.deleteKeyByUsername(username);
+        log.debug("Logout completed for user: {}", username);
     }
 
     private UserResponseDto toUserResponseDto(User user) {
