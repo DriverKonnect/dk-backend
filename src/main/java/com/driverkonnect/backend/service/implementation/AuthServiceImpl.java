@@ -88,7 +88,10 @@ public class AuthServiceImpl implements AuthService {
 
         if ("DRIVER".equals(user.getUserRole().getRole())) {
             driverApplicationRepository.findByUser_Email(user.getEmail())
-                    .ifPresent(app -> dto.setApplicationStatus(app.getStatus().name()));
+                    .ifPresent(app -> {
+                        dto.setApplicationId(app.getId());
+                        dto.setApplicationStatus(app.getStatus().name());
+                    });
         }
 
         return dto;
