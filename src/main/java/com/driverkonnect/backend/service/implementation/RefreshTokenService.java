@@ -9,6 +9,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -34,23 +36,29 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(String username) {
+        log.debug("Creating refresh token for user: {}", username);
         User user = userRepository.findByUsernameAndIsActiveTrue(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
 
         refreshTokenRepository.deleteByUser(user);
         refreshTokenRepository.flush();
+        log.debug("Existing refresh token removed for user: {}", username);
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(generateRefreshToken(username));
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpiration));
 
-        return refreshTokenRepository.save(refreshToken);
+        RefreshToken saved = refreshTokenRepository.save(refreshToken);
+        log.debug("New refresh token created for user: {}", username);
+        return saved;
     }
 
     @Transactional
     public void verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(Instant.now())) {
+            log.warn("Refresh token expired for user: {}",
+                    token.getUser() != null ? token.getUser().getEmail() : "unknown");
             refreshTokenRepository.delete(token);
             throw new RuntimeException("Refresh token expired. Please login again.");
         }
@@ -62,9 +70,11 @@ public class RefreshTokenService {
 
     @Transactional
     public void deleteKeyByUsername(String username) {
+        log.debug("Deleting refresh token for user: {}", username);
         User user = userRepository.findByUsernameAndIsActiveTrue(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
         refreshTokenRepository.deleteByUser(user);
+        log.debug("Refresh token deleted for user: {}", username);
     }
 
     private String generateRefreshToken(String username) {
