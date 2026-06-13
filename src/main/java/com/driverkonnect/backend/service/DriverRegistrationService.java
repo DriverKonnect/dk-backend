@@ -1,5 +1,6 @@
 package com.driverkonnect.backend.service;
 
+import com.driverkonnect.backend.dto.request.driver.DriverPasswordUpdateRequestDto;
 import com.driverkonnect.backend.dto.request.driver.DriverRegisterRequestDto;
 import com.driverkonnect.backend.dto.response.driver.DriverApplicationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,4 +12,5 @@ public interface DriverRegistrationService {
                                                   MultipartFile licenceBack,
                                                   MultipartFile policeClearance);
     DriverApplicationResponseDto getMyApplication();
+    void updatePassword(DriverPasswordUpdateRequestDto request);
 }

@@ -1,6 +1,7 @@
 package com.driverkonnect.backend.controller;
 
 import com.driverkonnect.backend.dto.request.auth.LoginRequestDto;
+import com.driverkonnect.backend.dto.request.driver.DriverPasswordUpdateRequestDto;
 import com.driverkonnect.backend.dto.request.driver.DriverRegisterRequestDto;
 import com.driverkonnect.backend.dto.response.auth.TokenPairDto;
 import com.driverkonnect.backend.dto.response.driver.DriverApplicationResponseDto;
@@ -67,6 +68,15 @@ public class DriverRegistrationController {
                 applicationId, licenceFront, licenceBack, policeClearance);
         log.info("POST /api/driver/register/{}/documents - documents uploaded successfully", applicationId);
         return ResponseUtil.success(result, "Documents uploaded successfully. Application is now under review.");
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Response<String>> updatePassword(
+            @Valid @RequestBody DriverPasswordUpdateRequestDto request) {
+        log.info("PUT /api/driver/password - password update request received");
+        driverRegistrationService.updatePassword(request);
+        log.info("PUT /api/driver/password - password updated successfully");
+        return ResponseUtil.success(null, "Password updated successfully. Please log in again.");
     }
 
     @GetMapping("/application/me")
