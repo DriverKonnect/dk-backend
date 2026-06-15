@@ -44,8 +44,20 @@ public class AdminUserServiceImpl implements AdminUserService {
         String email = request.getEmail().strip().toLowerCase();
         log.debug("Creating admin user for email: {}", email);
 
-        if (userRepository.existsByEmail(email)) {
-            throw new CustomException("An account with this email already exists", 409);
+        java.util.Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            if (!"ADMIN".equals(user.getUserRole().getRole())) {
+                throw new CustomException("This email is already in use by a non-admin account", 400);
+            }
+            if (user.getIsActive()) {
+                throw new CustomException("An active admin account with this email already exists", 409);
+            }
+            user.setIsActive(true);
+            user.setUpdatedAt(LocalDateTime.now());
+            User reactivated = userRepository.save(user);
+            log.debug("Existing admin account reactivated for email: {}", email);
+            return toResponseDto(reactivated);
         }
 
         UserRole adminRole = userRoleRepository.findByRole("ADMIN")
