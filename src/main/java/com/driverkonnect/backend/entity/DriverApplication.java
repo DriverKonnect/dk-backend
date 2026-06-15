@@ -67,6 +67,9 @@ public class DriverApplication {
     @Column(name = "privacy_policy_version")
     private String privacyPolicyVersion;
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
