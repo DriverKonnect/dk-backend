@@ -26,18 +26,18 @@ public class AdminUserController {
 
     @GetMapping
     public ResponseEntity<Response<List<AdminUserResponseDto>>> getAllAdminUsers() {
-        log.info("GET /api/admin/users - request received");
+        log.info("Received request to retrieve all admin users");
         List<AdminUserResponseDto> result = adminUserService.getAllAdminUsers();
-        log.info("GET /api/admin/users - returned {} admin users", result.size());
+        log.info("Successfully retrieved {} admin users", result.size());
         return ResponseUtil.success(result, "Admin users retrieved successfully");
     }
 
     @PostMapping
     public ResponseEntity<Response<AdminUserResponseDto>> createAdminUser(
             @Valid @RequestBody CreateAdminUserRequestDto request) {
-        log.info("POST /api/admin/users - create admin request received for email: {}", request.getEmail());
+        log.info("Received request to create a new admin user");
         AdminUserResponseDto result = adminUserService.createAdminUser(request);
-        log.info("POST /api/admin/users - admin user created with ID: {}", result.getId());
+        log.info("Successfully created admin user with ID: {}", result.getId());
         return ResponseUtil.created(result, "Admin user created successfully");
     }
 
@@ -45,9 +45,9 @@ public class AdminUserController {
     public ResponseEntity<Response<AdminUserResponseDto>> updateAdminStatus(
             @PathVariable Long userId,
             @Valid @RequestBody UpdateAdminStatusRequestDto request) {
-        log.info("PUT /api/admin/users/{}/status - request received, isActive: {}", userId, request.getIsActive());
+        log.info("Received request to update active status for admin user ID: {}", userId);
         AdminUserResponseDto result = adminUserService.updateAdminStatus(userId, request);
-        log.info("PUT /api/admin/users/{}/status - status updated successfully", userId);
+        log.info("Successfully updated active status for admin user ID: {}", result.getId());
         return ResponseUtil.success(result, "Admin user status updated successfully");
     }
 }

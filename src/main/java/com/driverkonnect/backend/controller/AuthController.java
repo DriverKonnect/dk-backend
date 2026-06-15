@@ -38,32 +38,32 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request,
                                                   HttpServletResponse response) {
-        log.info("POST /api/auth/login - request received for email: {}", request.getEmail());
+        log.info("Received request to log in user");
         TokenPairDto result = authService.login(request);
         setTokenCookies(response, result.getAccessToken(), result.getRefreshToken());
-        log.info("POST /api/auth/login - completed successfully for email: {}", request.getEmail());
+        log.info("Successfully logged in user");
         return ResponseEntity.ok(new AuthResponseDto(result.getUser()));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponseDto> refresh(HttpServletRequest request,
                                                     HttpServletResponse response) {
-        log.info("POST /api/auth/refresh - token refresh request received");
+        log.info("Received request to refresh access token");
         String refreshToken = extractRefreshTokenCookie(request);
         TokenPairDto result = authService.refreshAccessToken(refreshToken);
         setTokenCookies(response, result.getAccessToken(), result.getRefreshToken());
-        log.info("POST /api/auth/refresh - completed successfully");
+        log.info("Successfully refreshed access token");
         return ResponseEntity.ok(new AuthResponseDto(result.getUser()));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Response<String>> logout(HttpServletRequest request,
                                                     HttpServletResponse response) {
-        log.info("POST /api/auth/logout - logout request received");
+        log.info("Received request to log out user");
         String refreshToken = extractRefreshTokenCookie(request);
         authService.logout(refreshToken);
         clearTokenCookies(response);
-        log.info("POST /api/auth/logout - completed successfully");
+        log.info("Successfully logged out user");
         return ResponseUtil.success(null, "Logged out successfully");
     }
 
