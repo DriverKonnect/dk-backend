@@ -28,8 +28,11 @@ public class TourCompanyProfile {
     @Column(name = "business_registration_number", nullable = false, unique = true)
     private String businessRegistrationNumber;
 
-    @Column(name = "contact_person_name", nullable = false)
-    private String contactPersonName;
+    @Column(name = "contact_person_first_name", nullable = false)
+    private String contactPersonFirstName;
+
+    @Column(name = "contact_person_last_name", nullable = false)
+    private String contactPersonLastName;
 
     @Column(name = "phone", nullable = false)
     private String phone;

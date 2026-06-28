@@ -14,8 +14,11 @@ public class TourCompanyRegisterRequestDto {
     @NotBlank(message = "Business registration number is required")
     private String businessRegistrationNumber;
 
-    @NotBlank(message = "Contact person name is required")
-    private String contactPersonName;
+    @NotBlank(message = "Contact person first name is required")
+    private String contactPersonFirstName;
+
+    @NotBlank(message = "Contact person last name is required")
+    private String contactPersonLastName;
 
     @Email(message = "A valid email address is required")
     @NotBlank(message = "Email is required")

@@ -10,7 +10,8 @@ public class TourCompanyProfileResponseDto {
     private Long id;
     private String companyName;
     private String businessRegistrationNumber;
-    private String contactPersonName;
+    private String contactPersonFirstName;
+    private String contactPersonLastName;
     private String email;
     private String phone;
     private LocalDateTime createdAt;

@@ -53,7 +53,8 @@ public class TourCompanyServiceImpl implements TourCompanyService {
                 });
 
         User user = new User();
-        user.setFirstName(request.getContactPersonName().strip());
+        user.setFirstName(request.getContactPersonFirstName().strip());
+        user.setLastName(request.getContactPersonLastName().strip());
         user.setUsername(email);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -69,7 +70,8 @@ public class TourCompanyServiceImpl implements TourCompanyService {
         profile.setUser(user);
         profile.setCompanyName(request.getCompanyName().strip());
         profile.setBusinessRegistrationNumber(brn);
-        profile.setContactPersonName(request.getContactPersonName().strip());
+        profile.setContactPersonFirstName(request.getContactPersonFirstName().strip());
+        profile.setContactPersonLastName(request.getContactPersonLastName().strip());
         profile.setPhone(request.getPhone().strip());
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());
@@ -95,7 +97,8 @@ public class TourCompanyServiceImpl implements TourCompanyService {
         dto.setId(profile.getId());
         dto.setCompanyName(profile.getCompanyName());
         dto.setBusinessRegistrationNumber(profile.getBusinessRegistrationNumber());
-        dto.setContactPersonName(profile.getContactPersonName());
+        dto.setContactPersonFirstName(profile.getContactPersonFirstName());
+        dto.setContactPersonLastName(profile.getContactPersonLastName());
         dto.setEmail(profile.getUser().getEmail());
         dto.setPhone(profile.getPhone());
         dto.setCreatedAt(profile.getCreatedAt());
