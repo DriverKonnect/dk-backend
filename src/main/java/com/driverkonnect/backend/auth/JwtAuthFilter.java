@@ -40,8 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 JwtAuthenticationToken auth = new JwtAuthenticationToken(username, role);
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
-                log.debug("JWT authentication set for user: {} on {} {}",
-                        username, request.getMethod(), request.getRequestURI());
+                log.debug("JWT authentication set for user: {}", username);
             } else {
                 log.warn("Invalid JWT token received for {} {}", request.getMethod(), request.getRequestURI());
             }
