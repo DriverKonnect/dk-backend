@@ -1,11 +1,12 @@
 package com.driverkonnect.backend.controller;
 
+import com.driverkonnect.backend.dto.request.account.PasswordUpdateRequestDto;
 import com.driverkonnect.backend.dto.request.auth.LoginRequestDto;
-import com.driverkonnect.backend.dto.request.driver.DriverPasswordUpdateRequestDto;
 import com.driverkonnect.backend.dto.request.driver.DriverRegisterRequestDto;
 import com.driverkonnect.backend.dto.response.auth.TokenPairDto;
 import com.driverkonnect.backend.dto.response.driver.DriverApplicationResponseDto;
 import com.driverkonnect.backend.generics.Response;
+import com.driverkonnect.backend.service.AccountService;
 import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.service.DriverRegistrationService;
 import com.driverkonnect.backend.util.ResponseUtil;
@@ -29,6 +30,7 @@ public class DriverRegistrationController {
 
     private final DriverRegistrationService driverRegistrationService;
     private final AuthService authService;
+    private final AccountService accountService;
 
     @Value("${app.jwt.expiration}")
     private long jwtExpiration;
@@ -37,9 +39,11 @@ public class DriverRegistrationController {
     private long refreshExpiration;
 
     public DriverRegistrationController(DriverRegistrationService driverRegistrationService,
-                                        AuthService authService) {
+                                        AuthService authService,
+                                        AccountService accountService) {
         this.driverRegistrationService = driverRegistrationService;
         this.authService = authService;
+        this.accountService = accountService;
     }
 
     @PostMapping("/register")
@@ -71,9 +75,9 @@ public class DriverRegistrationController {
 
     @PutMapping("/password")
     public ResponseEntity<Response<String>> updatePassword(
-            @Valid @RequestBody DriverPasswordUpdateRequestDto request) {
+            @Valid @RequestBody PasswordUpdateRequestDto request) {
         log.info("Received request to update driver password");
-        driverRegistrationService.updatePassword(request);
+        accountService.updatePassword(request);
         log.info("Successfully updated driver password");
         return ResponseUtil.success(null, "Password updated successfully. Please log in again.");
     }
