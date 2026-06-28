@@ -1,10 +1,12 @@
 package com.driverkonnect.backend.controller;
 
+import com.driverkonnect.backend.dto.request.account.PasswordUpdateRequestDto;
 import com.driverkonnect.backend.dto.request.auth.LoginRequestDto;
 import com.driverkonnect.backend.dto.request.tourcompany.TourCompanyRegisterRequestDto;
 import com.driverkonnect.backend.dto.response.auth.TokenPairDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourCompanyProfileResponseDto;
 import com.driverkonnect.backend.generics.Response;
+import com.driverkonnect.backend.service.AccountService;
 import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.service.TourCompanyService;
 import com.driverkonnect.backend.util.ResponseUtil;
@@ -26,6 +28,7 @@ public class TourCompanyController {
 
     private final TourCompanyService tourCompanyService;
     private final AuthService authService;
+    private final AccountService accountService;
 
     @Value("${app.jwt.expiration}")
     private long jwtExpiration;
@@ -33,9 +36,12 @@ public class TourCompanyController {
     @Value("${app.jwt.refresh-expiration}")
     private long refreshExpiration;
 
-    public TourCompanyController(TourCompanyService tourCompanyService, AuthService authService) {
+    public TourCompanyController(TourCompanyService tourCompanyService,
+                                 AuthService authService,
+                                 AccountService accountService) {
         this.tourCompanyService = tourCompanyService;
         this.authService = authService;
+        this.accountService = accountService;
     }
 
     @PostMapping("/register")
@@ -48,7 +54,7 @@ public class TourCompanyController {
                 new LoginRequestDto(request.getEmail(), request.getPassword()));
         setTokenCookies(response, tokens.getAccessToken(), tokens.getRefreshToken());
         log.info("Successfully registered tour company with profile ID: {}", result.getId());
-        return ResponseUtil.created(result, "Tour company registered successfully. Your application is under review.");
+        return ResponseUtil.created(result, "Tour company registered successfully");
     }
 
     @GetMapping("/profile/me")
@@ -57,6 +63,15 @@ public class TourCompanyController {
         TourCompanyProfileResponseDto result = tourCompanyService.getMyProfile();
         log.info("Successfully retrieved tour company profile ID: {}", result.getId());
         return ResponseUtil.success(result, "Profile retrieved successfully");
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Response<String>> updatePassword(
+            @Valid @RequestBody PasswordUpdateRequestDto request) {
+        log.info("Received request to update tour company password");
+        accountService.updatePassword(request);
+        log.info("Successfully updated tour company password");
+        return ResponseUtil.success(null, "Password updated successfully. Please log in again.");
     }
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
