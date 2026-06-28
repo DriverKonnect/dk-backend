@@ -26,7 +26,7 @@ public class AdminTourApplicationStatusController {
     @PostMapping
     public ResponseEntity<Response<TourApplicationStatusResponseDto>> create(
             @Valid @RequestBody TourApplicationStatusRequestDto request) {
-        log.info("Received request to create tour application status: {}", request.getCode());
+        log.info("Received request to create tour application status: {}", request.getLabel());
         TourApplicationStatusResponseDto result = tourApplicationStatusService.create(request);
         log.info("Successfully created tour application status ID: {}", result.getId());
         return ResponseUtil.created(result, "Tour application status created successfully");

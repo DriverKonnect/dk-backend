@@ -22,12 +22,11 @@ public class TourApplicationStatusServiceImpl implements TourApplicationStatusSe
 
     @Override
     public TourApplicationStatusResponseDto create(TourApplicationStatusRequestDto dto) {
-        if (tourApplicationStatusRepository.existsByCodeIgnoreCase(dto.getCode())) {
-            throw new CustomException("Tour application status with this code already exists", 409);
+        if (tourApplicationStatusRepository.existsByLabelIgnoreCase(dto.getLabel())) {
+            throw new CustomException("Tour application status with this label already exists", 409);
         }
 
         TourApplicationStatus status = new TourApplicationStatus();
-        status.setCode(dto.getCode().toUpperCase());
         status.setLabel(dto.getLabel().trim());
         status.setDescription(dto.getDescription());
         status.setIsActive(true);
@@ -35,7 +34,7 @@ public class TourApplicationStatusServiceImpl implements TourApplicationStatusSe
         status.setUpdatedAt(LocalDateTime.now());
 
         status = tourApplicationStatusRepository.save(status);
-        log.debug("Created tour application status ID: {}, code: {}", status.getId(), status.getCode());
+        log.debug("Created tour application status ID: {}, label: {}", status.getId(), status.getLabel());
         return toDto(status);
     }
 
@@ -56,12 +55,11 @@ public class TourApplicationStatusServiceImpl implements TourApplicationStatusSe
     public TourApplicationStatusResponseDto update(Long id, TourApplicationStatusRequestDto dto) {
         TourApplicationStatus status = findById(id);
 
-        if (!status.getCode().equalsIgnoreCase(dto.getCode())
-                && tourApplicationStatusRepository.existsByCodeIgnoreCase(dto.getCode())) {
-            throw new CustomException("Tour application status with this code already exists", 409);
+        if (!status.getLabel().equalsIgnoreCase(dto.getLabel())
+                && tourApplicationStatusRepository.existsByLabelIgnoreCase(dto.getLabel())) {
+            throw new CustomException("Tour application status with this label already exists", 409);
         }
 
-        status.setCode(dto.getCode().toUpperCase());
         status.setLabel(dto.getLabel().trim());
         status.setDescription(dto.getDescription());
         status.setUpdatedAt(LocalDateTime.now());
@@ -89,7 +87,6 @@ public class TourApplicationStatusServiceImpl implements TourApplicationStatusSe
     private TourApplicationStatusResponseDto toDto(TourApplicationStatus status) {
         TourApplicationStatusResponseDto dto = new TourApplicationStatusResponseDto();
         dto.setId(status.getId());
-        dto.setCode(status.getCode());
         dto.setLabel(status.getLabel());
         dto.setDescription(status.getDescription());
         dto.setIsActive(status.getIsActive());

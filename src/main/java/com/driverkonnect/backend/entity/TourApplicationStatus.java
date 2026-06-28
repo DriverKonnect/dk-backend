@@ -18,10 +18,7 @@ public class TourApplicationStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 50)
-    private String code;
-
-    @Column(name = "label", nullable = false, length = 100)
+    @Column(name = "label", nullable = false, unique = true, length = 100)
     private String label;
 
     @Column(name = "description", length = 255)

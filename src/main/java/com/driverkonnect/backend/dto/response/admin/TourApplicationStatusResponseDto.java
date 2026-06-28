@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class TourApplicationStatusResponseDto {
     private Long id;
-    private String code;
     private String label;
     private String description;
     private Boolean isActive;

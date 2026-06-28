@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TourApplicationStatusRepository extends JpaRepository<TourApplicationStatus, Long> {
-    boolean existsByCodeIgnoreCase(String code);
+    boolean existsByLabelIgnoreCase(String label);
     List<TourApplicationStatus> findAllByOrderByLabelAsc();
 }
