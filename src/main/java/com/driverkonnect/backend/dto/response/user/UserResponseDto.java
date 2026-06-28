@@ -17,4 +17,6 @@ public class UserResponseDto {
     private Boolean isFirstLogin;
     private Long applicationId;
     private String applicationStatus;
+    private Long companyId;
+    private String companyName;
 }

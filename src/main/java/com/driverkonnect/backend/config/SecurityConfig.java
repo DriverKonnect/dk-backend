@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/driver/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tour-company/register").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/swagger-ui/**",

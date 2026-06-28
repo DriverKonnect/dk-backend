@@ -8,6 +8,7 @@ import com.driverkonnect.backend.entity.RefreshToken;
 import com.driverkonnect.backend.entity.User;
 import com.driverkonnect.backend.exception.CustomException;
 import com.driverkonnect.backend.repository.DriverApplicationRepository;
+import com.driverkonnect.backend.repository.TourCompanyProfileRepository;
 import com.driverkonnect.backend.repository.UserRepository;
 import com.driverkonnect.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
     private final DriverApplicationRepository driverApplicationRepository;
+    private final TourCompanyProfileRepository tourCompanyProfileRepository;
 
     @Override
     public TokenPairDto login(LoginRequestDto request) {
@@ -96,6 +98,14 @@ public class AuthServiceImpl implements AuthService {
                     .ifPresent(app -> {
                         dto.setApplicationId(app.getId());
                         dto.setApplicationStatus(app.getStatus().name());
+                    });
+        }
+
+        if ("TOUR_COMPANY".equals(user.getUserRole().getRole())) {
+            tourCompanyProfileRepository.findByUser_Email(user.getEmail())
+                    .ifPresent(profile -> {
+                        dto.setCompanyId(profile.getId());
+                        dto.setCompanyName(profile.getCompanyName());
                     });
         }
 
