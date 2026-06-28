@@ -25,27 +25,27 @@ public class AdminController {
 
     @GetMapping("/drivers")
     public ResponseEntity<Response<List<AdminDriverSummaryDto>>> getAllApplications() {
-        log.info("GET /api/admin/drivers - request received");
+        log.info("Received request to retrieve all driver applications");
         List<AdminDriverSummaryDto> result = adminService.getAllApplications();
-        log.info("GET /api/admin/drivers - returned {} applications", result.size());
+        log.info("Successfully retrieved {} driver applications", result.size());
         return ResponseUtil.success(result, "Applications retrieved successfully");
     }
 
     @GetMapping("/drivers/{applicationId}")
     public ResponseEntity<Response<AdminDriverResponseDto>> getApplication(
             @PathVariable Long applicationId) {
-        log.info("GET /api/admin/drivers/{} - request received", applicationId);
+        log.info("Received request to retrieve driver application ID: {}", applicationId);
         AdminDriverResponseDto result = adminService.getApplication(applicationId);
-        log.info("GET /api/admin/drivers/{} - completed successfully", applicationId);
+        log.info("Successfully retrieved driver application ID: {}", applicationId);
         return ResponseUtil.success(result, "Application retrieved successfully");
     }
 
     @PutMapping("/drivers/{applicationId}/approve")
     public ResponseEntity<Response<AdminDriverResponseDto>> approveApplication(
             @PathVariable Long applicationId) {
-        log.info("PUT /api/admin/drivers/{}/approve - request received", applicationId);
+        log.info("Received request to approve driver application ID: {}", applicationId);
         AdminDriverResponseDto result = adminService.approveApplication(applicationId);
-        log.info("PUT /api/admin/drivers/{}/approve - application approved", applicationId);
+        log.info("Successfully approved driver application ID: {}", applicationId);
         return ResponseUtil.success(result, "Application approved successfully");
     }
 
@@ -53,19 +53,19 @@ public class AdminController {
     public ResponseEntity<Response<AdminDriverResponseDto>> rejectApplication(
             @PathVariable Long applicationId,
             @RequestBody(required = false) AdminRejectRequestDto request) {
-        log.info("PUT /api/admin/drivers/{}/reject - request received", applicationId);
+        log.info("Received request to reject driver application ID: {}", applicationId);
         AdminDriverResponseDto result = adminService.rejectApplication(
                 applicationId, request != null ? request : new AdminRejectRequestDto());
-        log.info("PUT /api/admin/drivers/{}/reject - application rejected", applicationId);
+        log.info("Successfully rejected driver application ID: {}", applicationId);
         return ResponseUtil.success(result, "Application rejected");
     }
 
     @PutMapping("/drivers/{applicationId}/deactivate")
     public ResponseEntity<Response<AdminDriverResponseDto>> deactivateDriver(
             @PathVariable Long applicationId) {
-        log.info("PUT /api/admin/drivers/{}/deactivate - request received", applicationId);
+        log.info("Received request to deactivate driver account for application ID: {}", applicationId);
         AdminDriverResponseDto result = adminService.deactivateDriver(applicationId);
-        log.info("PUT /api/admin/drivers/{}/deactivate - driver deactivated", applicationId);
+        log.info("Successfully deactivated driver account for application ID: {}", applicationId);
         return ResponseUtil.success(result, "Driver account deactivated");
     }
 }

@@ -46,13 +46,12 @@ public class DriverRegistrationController {
     public ResponseEntity<Response<DriverApplicationResponseDto>> register(
             @Valid @RequestBody DriverRegisterRequestDto request,
             HttpServletResponse response) {
-        log.info("POST /api/driver/register - registration request received for email: {}", request.getEmail());
+        log.info("Received request to register a new driver");
         DriverApplicationResponseDto result = driverRegistrationService.register(request);
         TokenPairDto tokens = authService.login(
                 new LoginRequestDto(request.getEmail(), request.getPassword()));
         setTokenCookies(response, tokens.getAccessToken(), tokens.getRefreshToken());
-        log.info("POST /api/driver/register - registration completed for email: {}, applicationId: {}",
-                request.getEmail(), result.getId());
+        log.info("Successfully registered driver with application ID: {}", result.getId());
         return ResponseUtil.created(result, "Registration submitted successfully");
     }
 
@@ -63,27 +62,27 @@ public class DriverRegistrationController {
             @RequestParam("licenceFront") MultipartFile licenceFront,
             @RequestParam("licenceBack") MultipartFile licenceBack,
             @RequestParam("policeClearance") MultipartFile policeClearance) {
-        log.info("POST /api/driver/register/{}/documents - document upload request received", applicationId);
+        log.info("Received request to upload documents for application ID: {}", applicationId);
         DriverApplicationResponseDto result = driverRegistrationService.uploadDocuments(
                 applicationId, licenceFront, licenceBack, policeClearance);
-        log.info("POST /api/driver/register/{}/documents - documents uploaded successfully", applicationId);
+        log.info("Successfully uploaded documents for application ID: {}", applicationId);
         return ResponseUtil.success(result, "Documents uploaded successfully. Application is now under review.");
     }
 
     @PutMapping("/password")
     public ResponseEntity<Response<String>> updatePassword(
             @Valid @RequestBody DriverPasswordUpdateRequestDto request) {
-        log.info("PUT /api/driver/password - password update request received");
+        log.info("Received request to update driver password");
         driverRegistrationService.updatePassword(request);
-        log.info("PUT /api/driver/password - password updated successfully");
+        log.info("Successfully updated driver password");
         return ResponseUtil.success(null, "Password updated successfully. Please log in again.");
     }
 
     @GetMapping("/application/me")
     public ResponseEntity<Response<DriverApplicationResponseDto>> getMyApplication() {
-        log.info("GET /api/driver/application/me - request received");
+        log.info("Received request to retrieve driver's own application");
         DriverApplicationResponseDto result = driverRegistrationService.getMyApplication();
-        log.info("GET /api/driver/application/me - completed successfully, applicationId: {}", result.getId());
+        log.info("Successfully retrieved application ID: {}", result.getId());
         return ResponseUtil.success(result, "Application retrieved successfully");
     }
 
