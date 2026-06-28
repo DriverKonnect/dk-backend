@@ -11,5 +11,4 @@ public interface VehicleTypeService {
     VehicleTypeResponseDto getById(Long id);
     VehicleTypeResponseDto update(Long id, VehicleTypeRequestDto dto);
     VehicleTypeResponseDto toggleActive(Long id);
-    void delete(Long id);
 }

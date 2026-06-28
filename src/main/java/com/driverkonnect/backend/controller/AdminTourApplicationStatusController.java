@@ -65,11 +65,4 @@ public class AdminTourApplicationStatusController {
         return ResponseUtil.success(result, "Tour application status updated");
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Response<Void>> delete(@PathVariable Long id) {
-        log.info("Received request to delete tour application status ID: {}", id);
-        tourApplicationStatusService.delete(id);
-        log.info("Successfully deleted tour application status ID: {}", id);
-        return ResponseUtil.success(null, "Tour application status deleted successfully");
-    }
 }

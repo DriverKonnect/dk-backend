@@ -11,5 +11,4 @@ public interface TourApplicationStatusService {
     TourApplicationStatusResponseDto getById(Long id);
     TourApplicationStatusResponseDto update(Long id, TourApplicationStatusRequestDto dto);
     TourApplicationStatusResponseDto toggleActive(Long id);
-    void delete(Long id);
 }

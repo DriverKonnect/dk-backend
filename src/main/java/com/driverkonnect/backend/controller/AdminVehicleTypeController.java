@@ -65,11 +65,4 @@ public class AdminVehicleTypeController {
         return ResponseUtil.success(result, "Vehicle type status updated");
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Response<Void>> delete(@PathVariable Long id) {
-        log.info("Received request to delete vehicle type ID: {}", id);
-        vehicleTypeService.delete(id);
-        log.info("Successfully deleted vehicle type ID: {}", id);
-        return ResponseUtil.success(null, "Vehicle type deleted successfully");
-    }
 }

@@ -4,8 +4,9 @@ import com.driverkonnect.backend.entity.VehicleType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface VehicleTypeRepository extends JpaRepository<VehicleType, Long> {
-    boolean existsByNameIgnoreCase(String name);
+    Optional<VehicleType> findByNameIgnoreCase(String name);
     List<VehicleType> findAllByOrderByNameAsc();
 }

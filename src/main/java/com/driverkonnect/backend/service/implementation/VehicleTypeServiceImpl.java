@@ -22,20 +22,29 @@ public class VehicleTypeServiceImpl implements VehicleTypeService {
 
     @Override
     public VehicleTypeResponseDto create(VehicleTypeRequestDto dto) {
-        if (vehicleTypeRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new CustomException("Vehicle type with this name already exists", 409);
-        }
-
-        VehicleType vehicleType = new VehicleType();
-        vehicleType.setName(dto.getName().trim());
-        vehicleType.setDescription(dto.getDescription());
-        vehicleType.setIsActive(true);
-        vehicleType.setCreatedAt(LocalDateTime.now());
-        vehicleType.setUpdatedAt(LocalDateTime.now());
-
-        vehicleType = vehicleTypeRepository.save(vehicleType);
-        log.debug("Created vehicle type ID: {}, name: {}", vehicleType.getId(), vehicleType.getName());
-        return toDto(vehicleType);
+        return vehicleTypeRepository.findByNameIgnoreCase(dto.getName().trim())
+                .map(existing -> {
+                    if (existing.getIsActive()) {
+                        throw new CustomException("Vehicle type with this name already exists", 409);
+                    }
+                    existing.setIsActive(true);
+                    existing.setDescription(dto.getDescription());
+                    existing.setUpdatedAt(LocalDateTime.now());
+                    VehicleType reactivated = vehicleTypeRepository.save(existing);
+                    log.debug("Reactivated existing vehicle type ID: {}", reactivated.getId());
+                    return toDto(reactivated);
+                })
+                .orElseGet(() -> {
+                    VehicleType vehicleType = new VehicleType();
+                    vehicleType.setName(dto.getName().trim());
+                    vehicleType.setDescription(dto.getDescription());
+                    vehicleType.setIsActive(true);
+                    vehicleType.setCreatedAt(LocalDateTime.now());
+                    vehicleType.setUpdatedAt(LocalDateTime.now());
+                    VehicleType saved = vehicleTypeRepository.save(vehicleType);
+                    log.debug("Created vehicle type ID: {}, name: {}", saved.getId(), saved.getName());
+                    return toDto(saved);
+                });
     }
 
     @Override
@@ -56,8 +65,10 @@ public class VehicleTypeServiceImpl implements VehicleTypeService {
     public VehicleTypeResponseDto update(Long id, VehicleTypeRequestDto dto) {
         VehicleType vehicleType = findById(id);
 
-        if (!vehicleType.getName().equalsIgnoreCase(dto.getName())
-                && vehicleTypeRepository.existsByNameIgnoreCase(dto.getName())) {
+        boolean nameConflict = vehicleTypeRepository.findByNameIgnoreCase(dto.getName().trim())
+                .map(existing -> !existing.getId().equals(id))
+                .orElse(false);
+        if (nameConflict) {
             throw new CustomException("Vehicle type with this name already exists", 409);
         }
 
@@ -78,13 +89,6 @@ public class VehicleTypeServiceImpl implements VehicleTypeService {
         vehicleType = vehicleTypeRepository.save(vehicleType);
         log.debug("Toggled vehicle type ID: {} to isActive={}", id, vehicleType.getIsActive());
         return toDto(vehicleType);
-    }
-
-    @Override
-    public void delete(Long id) {
-        VehicleType vehicleType = findById(id);
-        vehicleTypeRepository.delete(vehicleType);
-        log.debug("Deleted vehicle type ID: {}", id);
     }
 
     private VehicleType findById(Long id) {

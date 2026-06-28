@@ -81,13 +81,6 @@ public class TourApplicationStatusServiceImpl implements TourApplicationStatusSe
         return toDto(status);
     }
 
-    @Override
-    public void delete(Long id) {
-        TourApplicationStatus status = findById(id);
-        tourApplicationStatusRepository.delete(status);
-        log.debug("Deleted tour application status ID: {}", id);
-    }
-
     private TourApplicationStatus findById(Long id) {
         return tourApplicationStatusRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Tour application status not found", 404));
