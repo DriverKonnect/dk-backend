@@ -2,5 +2,6 @@ package com.driverkonnect.backend.enums;
 
 public enum TourStatus {
     DRAFT,
-    PUBLISHED
+    PUBLISHED,
+    ASSIGNED
 }
