@@ -37,7 +37,7 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new CustomException("User not found", 404));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            log.warn("Password update failed — incorrect current password for user: {}", email);
+            log.warn("Password update failed - incorrect current password for user: {}", email);
             throw new CustomException("Current password is incorrect", 400);
         }
 

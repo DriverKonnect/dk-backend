@@ -31,7 +31,7 @@ public class JwtUserDetails implements UserDetailsService {
 
         User user = userRepository.findByEmailAndIsActiveTrue(email)
                 .orElseThrow(() -> {
-                    log.warn("Authentication failed — user not found or inactive for email: {}", email);
+                    log.warn("Authentication failed - user not found or inactive for email: {}", email);
                     return new BadCredentialsException("User not found with email: " + email);
                 });
 

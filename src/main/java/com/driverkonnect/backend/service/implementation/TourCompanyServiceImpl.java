@@ -48,7 +48,7 @@ public class TourCompanyServiceImpl implements TourCompanyService {
 
         UserRole tourCompanyRole = userRoleRepository.findByRole("TOUR_COMPANY")
                 .orElseThrow(() -> {
-                    log.error("TOUR_COMPANY role not found in database — check seed data in V1 migration");
+                    log.error("TOUR_COMPANY role not found in database - check seed data in V1 migration");
                     return new CustomException("TOUR_COMPANY role not configured", 500);
                 });
 

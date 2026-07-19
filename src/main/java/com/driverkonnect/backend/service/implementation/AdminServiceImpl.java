@@ -84,7 +84,7 @@ public class AdminServiceImpl implements AdminService {
         application.setRejectionReason(request.getReason());
         application.setUpdatedAt(LocalDateTime.now());
         application = driverApplicationRepository.save(application);
-        log.debug("Application ID: {} rejected — reason: {}", applicationId, request.getReason());
+        log.debug("Application ID: {} rejected - reason: {}", applicationId, request.getReason());
 
         return toDetailDto(application);
     }
