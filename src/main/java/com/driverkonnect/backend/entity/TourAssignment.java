@@ -26,6 +26,9 @@ public class TourAssignment {
     @JoinColumn(name = "driver_id", nullable = false)
     private User driver;
 
+    @Column(name = "rating")
+    private Integer rating;
+
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 

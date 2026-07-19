@@ -3,6 +3,8 @@ package com.driverkonnect.backend.controller;
 import com.driverkonnect.backend.dto.request.tourcompany.TourRequestDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
+import com.driverkonnect.backend.enums.TourStatus;
+import com.driverkonnect.backend.generics.PagedResponseDto;
 import com.driverkonnect.backend.generics.Response;
 import com.driverkonnect.backend.service.TourRequestService;
 import com.driverkonnect.backend.util.ResponseUtil;
@@ -12,11 +14,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDate;
 
 @Slf4j
 @RestController
@@ -44,12 +47,24 @@ public class TourRequestController {
     @GetMapping
     @Operation(
             summary = "List own tour requests",
-            description = "Returns all tour requests belonging to the authenticated tour company, ordered by creation date descending."
+            description = "Returns a paginated list of tour requests belonging to the authenticated tour company. " +
+                    "Supports optional filtering by status (DRAFT, PUBLISHED, ASSIGNED, COMPLETED, CANCELLED) " +
+                    "and by date range (dateFrom/dateTo filter on the tour's start date). " +
+                    "Results include driver name, star rating (1–5), payment amount, and payment status where available. " +
+                    "Ordered by creation date descending."
     )
-    public ResponseEntity<Response<List<TourRequestSummaryDto>>> getMyTours() {
-        log.info("Received request to retrieve tour company's tour requests");
-        List<TourRequestSummaryDto> result = tourRequestService.getMyTours();
-        log.info("Successfully retrieved {} tour requests", result.size());
+    public ResponseEntity<Response<PagedResponseDto<TourRequestSummaryDto>>> getMyTours(
+            @Parameter(description = "Filter by tour status") @RequestParam(required = false) TourStatus status,
+            @Parameter(description = "Filter tours with start date on or after this date (ISO format: yyyy-MM-dd)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @Parameter(description = "Filter tours with start date on or before this date (ISO format: yyyy-MM-dd)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @Parameter(description = "Page number (0-indexed, default 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size (default 10)") @RequestParam(defaultValue = "10") int size) {
+        log.info("Received request to retrieve tour company's tour requests — status={}, dateFrom={}, dateTo={}, page={}, size={}",
+                status, dateFrom, dateTo, page, size);
+        PagedResponseDto<TourRequestSummaryDto> result = tourRequestService.getMyTours(status, dateFrom, dateTo, page, size);
+        log.info("Successfully retrieved {} tour requests (page {}/{})", result.getContent().size(), page, result.getTotalPages());
         return ResponseUtil.success(result, "Tour requests retrieved successfully");
     }
 

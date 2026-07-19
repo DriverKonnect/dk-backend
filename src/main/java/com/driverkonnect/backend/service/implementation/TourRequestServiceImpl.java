@@ -5,25 +5,27 @@ import com.driverkonnect.backend.dto.request.tourcompany.TourRequestDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourLocationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
-import com.driverkonnect.backend.entity.TourCompanyProfile;
-import com.driverkonnect.backend.entity.TourLocation;
-import com.driverkonnect.backend.entity.TourRequest;
-import com.driverkonnect.backend.entity.VehicleType;
+import com.driverkonnect.backend.entity.*;
 import com.driverkonnect.backend.enums.LocationType;
 import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.exception.CustomException;
-import com.driverkonnect.backend.repository.TourCompanyProfileRepository;
-import com.driverkonnect.backend.repository.TourRequestRepository;
-import com.driverkonnect.backend.repository.VehicleTypeRepository;
+import com.driverkonnect.backend.generics.PagedResponseDto;
+import com.driverkonnect.backend.repository.*;
 import com.driverkonnect.backend.service.TourRequestService;
 import com.driverkonnect.backend.util.AuthUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,6 +35,7 @@ public class TourRequestServiceImpl implements TourRequestService {
     private final TourRequestRepository tourRequestRepository;
     private final TourCompanyProfileRepository tourCompanyProfileRepository;
     private final VehicleTypeRepository vehicleTypeRepository;
+    private final TourAssignmentRepository tourAssignmentRepository;
 
     @Override
     @Transactional
@@ -60,12 +63,26 @@ public class TourRequestServiceImpl implements TourRequestService {
 
     @Override
     @Transactional
-    public List<TourRequestSummaryDto> getMyTours() {
+    public PagedResponseDto<TourRequestSummaryDto> getMyTours(
+            TourStatus status, LocalDate dateFrom, LocalDate dateTo, int page, int size) {
         TourCompanyProfile company = resolveCurrentCompany();
-        return tourRequestRepository.findByTourCompany_IdOrderByCreatedAtDesc(company.getId())
+
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<TourRequest> tourPage = tourRequestRepository.findByCompanyWithFilters(
+                company.getId(), status, dateFrom, dateTo, pageable);
+
+        List<Long> tourIds = tourPage.getContent().stream().map(TourRequest::getId).toList();
+        Map<Long, TourAssignment> assignmentMap = tourAssignmentRepository
+                .findByTourRequest_IdIn(tourIds)
                 .stream()
-                .map(this::toSummaryDto)
+                .collect(Collectors.toMap(a -> a.getTourRequest().getId(), a -> a));
+
+        List<TourRequestSummaryDto> content = tourPage.getContent().stream()
+                .map(t -> toSummaryDto(t, assignmentMap.get(t.getId())))
                 .toList();
+
+        return new PagedResponseDto<>(content, tourPage.getNumber(), tourPage.getSize(),
+                tourPage.getTotalElements(), tourPage.getTotalPages());
     }
 
     @Override
@@ -150,12 +167,8 @@ public class TourRequestServiceImpl implements TourRequestService {
         boolean hasDropoff = locations.stream()
                 .anyMatch(l -> l.getLocationType() == LocationType.DROPOFF);
 
-        if (!hasPickup) {
-            throw new CustomException("At least one pickup location is required", 400);
-        }
-        if (!hasDropoff) {
-            throw new CustomException("At least one dropoff location is required", 400);
-        }
+        if (!hasPickup) throw new CustomException("At least one pickup location is required", 400);
+        if (!hasDropoff) throw new CustomException("At least one dropoff location is required", 400);
     }
 
     private void applyFields(TourRequest tourRequest, TourRequestDto dto, VehicleType vehicleType) {
@@ -186,6 +199,38 @@ public class TourRequestServiceImpl implements TourRequestService {
             location.setCreatedAt(LocalDateTime.now());
             return location;
         }).toList();
+    }
+
+    private TourRequestSummaryDto toSummaryDto(TourRequest t, TourAssignment assignment) {
+        TourRequestSummaryDto dto = new TourRequestSummaryDto();
+        dto.setId(t.getId());
+        dto.setReferenceNumber(generateReferenceNumber(t));
+        dto.setTourName(t.getTourName());
+        dto.setTripType(t.getTripType().name());
+        dto.setTravellerNationality(t.getTravellerNationality().name());
+        dto.setStartDate(t.getStartDate());
+        dto.setEndDate(t.getEndDate());
+        dto.setPaxCount(t.getPaxCount());
+        dto.setVehicleTypeName(t.getVehicleType().getName());
+        dto.setStatus(t.getStatus().name());
+        dto.setAmount(t.getAmount());
+        dto.setPaymentStatus(t.getPaymentStatus() != null ? t.getPaymentStatus().name() : null);
+        dto.setCreatedAt(t.getCreatedAt());
+
+        if (assignment != null) {
+            dto.setDriverFirstName(assignment.getDriver().getFirstName());
+            dto.setDriverLastName(assignment.getDriver().getLastName());
+            dto.setRating(assignment.getRating());
+        }
+
+        return dto;
+    }
+
+    private String generateReferenceNumber(TourRequest t) {
+        int year = t.getCreatedAt() != null
+                ? t.getCreatedAt().getYear()
+                : LocalDate.now().getYear();
+        return String.format("TR-%d-%04d", year, t.getId());
     }
 
     private TourRequestResponseDto toResponseDto(TourRequest t) {
@@ -222,21 +267,6 @@ public class TourRequestServiceImpl implements TourRequestService {
             }).toList());
         }
 
-        return dto;
-    }
-
-    private TourRequestSummaryDto toSummaryDto(TourRequest t) {
-        TourRequestSummaryDto dto = new TourRequestSummaryDto();
-        dto.setId(t.getId());
-        dto.setTourName(t.getTourName());
-        dto.setTripType(t.getTripType().name());
-        dto.setTravellerNationality(t.getTravellerNationality().name());
-        dto.setStartDate(t.getStartDate());
-        dto.setEndDate(t.getEndDate());
-        dto.setPaxCount(t.getPaxCount());
-        dto.setVehicleTypeName(t.getVehicleType().getName());
-        dto.setStatus(t.getStatus().name());
-        dto.setCreatedAt(t.getCreatedAt());
         return dto;
     }
 }
