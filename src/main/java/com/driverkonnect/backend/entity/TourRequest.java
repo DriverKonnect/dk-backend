@@ -1,5 +1,6 @@
 package com.driverkonnect.backend.entity;
 
+import com.driverkonnect.backend.enums.PaymentStatus;
 import com.driverkonnect.backend.enums.PaymentTerm;
 import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.enums.TravellerNationality;
@@ -75,6 +76,13 @@ public class TourRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private TourStatus status = TourStatus.DRAFT;
+
+    @Column(name = "amount", precision = 12, scale = 2)
+    private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 20)
+    private PaymentStatus paymentStatus;
 
     @OneToMany(mappedBy = "tourRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("sequenceOrder ASC")
