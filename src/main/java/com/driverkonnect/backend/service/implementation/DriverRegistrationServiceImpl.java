@@ -68,7 +68,7 @@ public class DriverRegistrationServiceImpl implements DriverRegistrationService 
 
         UserRole driverRole = userRoleRepository.findByRole("DRIVER")
                 .orElseThrow(() -> {
-                    log.error("DRIVER role not found in database — check seed data in V1 migration");
+                    log.error("DRIVER role not found in database - check seed data in V1 migration");
                     return new CustomException("DRIVER role not configured", 500);
                 });
 
@@ -175,7 +175,7 @@ public class DriverRegistrationServiceImpl implements DriverRegistrationService 
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            log.error("Failed to store {} file for application ID: {} — path: {} — reason: {}",
+            log.error("Failed to store {} file for application ID: {} - path: {} - reason: {}",
                     type.name(), application.getId(), uploadPath.resolve(fileName), e.getMessage(), e);
             throw new CustomException("Failed to store file: " + type.name(), 500);
         }
@@ -196,12 +196,12 @@ public class DriverRegistrationServiceImpl implements DriverRegistrationService 
             throw new CustomException(type.name() + " file cannot be empty", 400);
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            log.warn("File too large for document type: {} — size: {} bytes", type.name(), file.getSize());
+            log.warn("File too large for document type: {} - size: {} bytes", type.name(), file.getSize());
             throw new CustomException(type.name() + " file must not exceed 10MB", 400);
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            log.warn("Invalid content type for document type: {} — received: {}", type.name(), contentType);
+            log.warn("Invalid content type for document type: {} - received: {}", type.name(), contentType);
             throw new CustomException(type.name() + ": only JPG and PNG files are allowed", 400);
         }
     }
