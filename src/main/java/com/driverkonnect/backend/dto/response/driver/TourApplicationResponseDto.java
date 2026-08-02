@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,6 +18,11 @@ public class TourApplicationResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String vehicleTypeName;
+    private Long vehicleId;
+    private String vehicleBrand;
+    private String vehicleModel;
+    private String vehicleCategory;
+    private BigDecimal perKmRateSnapshot;
     private String note;
     private String statusLabel;
     private Boolean isWithdrawn;

@@ -10,6 +10,7 @@ import com.driverkonnect.backend.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -55,14 +56,13 @@ public class DriverTourController {
     @PostMapping("/{id}/apply")
     @Operation(
             summary = "Apply for a tour",
-            description = "Submits an application for the specified published tour. An optional note can be included. Returns 409 if the driver has already applied and not withdrawn. Returns 400 if the tour is not in PUBLISHED status."
+            description = "Submits an application for the specified published tour. Requires the ID of an approved vehicle from the driver's fleet. The vehicle's per-km rate is snapshotted at application time. An optional note can be included. Returns 400 if the vehicle is not approved or the tour is not published. Returns 409 if the driver has already applied and not withdrawn."
     )
     public ResponseEntity<Response<TourApplicationResponseDto>> apply(
             @Parameter(description = "Tour request ID") @PathVariable Long id,
-            @RequestBody(required = false) ApplyForTourDto request) {
+            @Valid @RequestBody ApplyForTourDto request) {
         log.info("Received request to apply for tour ID: {}", id);
-        TourApplicationResponseDto result = tourApplicationService.apply(id,
-                request != null ? request : new ApplyForTourDto());
+        TourApplicationResponseDto result = tourApplicationService.apply(id, request);
         log.info("Successfully applied for tour ID: {}, application ID: {}", id, result.getId());
         return ResponseUtil.created(result, "Application submitted successfully");
     }

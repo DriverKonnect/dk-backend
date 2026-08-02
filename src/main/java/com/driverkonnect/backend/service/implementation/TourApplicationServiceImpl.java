@@ -5,11 +5,14 @@ import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourLocationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
+import com.driverkonnect.backend.entity.DriverVehicle;
 import com.driverkonnect.backend.entity.TourDriverApplication;
 import com.driverkonnect.backend.entity.TourRequest;
 import com.driverkonnect.backend.entity.User;
 import com.driverkonnect.backend.enums.TourStatus;
+import com.driverkonnect.backend.enums.VehicleApprovalStatus;
 import com.driverkonnect.backend.exception.CustomException;
+import com.driverkonnect.backend.repository.DriverVehicleRepository;
 import com.driverkonnect.backend.repository.TourDriverApplicationRepository;
 import com.driverkonnect.backend.repository.TourRequestRepository;
 import com.driverkonnect.backend.repository.UserRepository;
@@ -31,6 +34,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
     private final TourRequestRepository tourRequestRepository;
     private final TourDriverApplicationRepository tourDriverApplicationRepository;
     private final UserRepository userRepository;
+    private final DriverVehicleRepository driverVehicleRepository;
 
     @Override
     @Transactional
@@ -72,9 +76,19 @@ public class TourApplicationServiceImpl implements TourApplicationService {
             throw new CustomException("You have already applied for this tour", 409);
         }
 
+        DriverVehicle vehicle = driverVehicleRepository
+                .findByIdAndDriver_EmailAndIsActiveTrue(dto.getVehicleId(), email)
+                .orElseThrow(() -> new CustomException("Vehicle not found", 404));
+
+        if (vehicle.getApprovalStatus() != VehicleApprovalStatus.APPROVED) {
+            throw new CustomException("Only approved vehicles can be used to apply for tours", 400);
+        }
+
         TourDriverApplication application = new TourDriverApplication();
         application.setTourRequest(tourRequest);
         application.setDriver(driver);
+        application.setDriverVehicle(vehicle);
+        application.setPerKmRateSnapshot(vehicle.getPerKmRate());
         application.setNote(dto.getNote());
         application.setIsWithdrawn(false);
         application.setAppliedAt(LocalDateTime.now());
@@ -127,6 +141,13 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setStartDate(a.getTourRequest().getStartDate());
         dto.setEndDate(a.getTourRequest().getEndDate());
         dto.setVehicleTypeName(a.getTourRequest().getVehicleType().getName());
+        if (a.getDriverVehicle() != null) {
+            dto.setVehicleId(a.getDriverVehicle().getId());
+            dto.setVehicleBrand(a.getDriverVehicle().getBrand());
+            dto.setVehicleModel(a.getDriverVehicle().getModel());
+            dto.setVehicleCategory(a.getDriverVehicle().getVehicleCategory().name());
+        }
+        dto.setPerKmRateSnapshot(a.getPerKmRateSnapshot());
         dto.setNote(a.getNote());
         dto.setStatusLabel(a.getTourApplicationStatus() != null
                 ? a.getTourApplicationStatus().getLabel()

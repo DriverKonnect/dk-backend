@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,6 +16,11 @@ public class TourDriverApplicationSummaryDto {
     private String driverFirstName;
     private String driverLastName;
     private String driverEmail;
+    private Long vehicleId;
+    private String vehicleBrand;
+    private String vehicleModel;
+    private String vehicleCategory;
+    private BigDecimal perKmRateSnapshot;
     private String note;
     private String statusLabel;
     private Boolean isWithdrawn;

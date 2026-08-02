@@ -129,6 +129,13 @@ public class TourAssignmentServiceImpl implements TourAssignmentService {
         dto.setDriverFirstName(driver.getFirstName());
         dto.setDriverLastName(driver.getLastName());
         dto.setDriverEmail(driver.getEmail());
+        if (a.getDriverVehicle() != null) {
+            dto.setVehicleId(a.getDriverVehicle().getId());
+            dto.setVehicleBrand(a.getDriverVehicle().getBrand());
+            dto.setVehicleModel(a.getDriverVehicle().getModel());
+            dto.setVehicleCategory(a.getDriverVehicle().getVehicleCategory().name());
+        }
+        dto.setPerKmRateSnapshot(a.getPerKmRateSnapshot());
         dto.setNote(a.getNote());
         dto.setStatusLabel(a.getTourApplicationStatus() != null
                 ? a.getTourApplicationStatus().getLabel()
