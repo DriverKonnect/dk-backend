@@ -1,6 +1,7 @@
 package com.driverkonnect.backend.controller;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
@@ -77,6 +78,30 @@ public class DriverTourController {
         List<TourApplicationResponseDto> result = tourApplicationService.getMyApplications();
         log.info("Successfully retrieved {} tour applications", result.size());
         return ResponseUtil.success(result, "Applications retrieved successfully");
+    }
+
+    @GetMapping("/active")
+    @Operation(
+            summary = "Get active tour",
+            description = "Returns the driver's currently active tour — one in ASSIGNED or IN_PROGRESS status. Includes full location list, estimated earnings (estimatedKm × per-km rate), and payment details. Returns 404 if the driver has no active tour."
+    )
+    public ResponseEntity<Response<DriverActiveTourDto>> getMyActiveTour() {
+        log.info("Driver requesting active tour");
+        DriverActiveTourDto result = tourApplicationService.getMyActiveTour();
+        return ResponseUtil.success(result, "Active tour retrieved successfully");
+    }
+
+    @PatchMapping("/{id}/start")
+    @Operation(
+            summary = "Mark tour as started",
+            description = "Transitions the assigned tour to IN_PROGRESS status, indicating the driver has begun the tour. Only works when the tour is in ASSIGNED status — returns 400 if already started or not assigned to this driver."
+    )
+    public ResponseEntity<Response<DriverActiveTourDto>> startTour(
+            @Parameter(description = "Tour request ID") @PathVariable Long id) {
+        log.info("Driver marking tour ID: {} as started", id);
+        DriverActiveTourDto result = tourApplicationService.startTour(id);
+        log.info("Tour ID: {} marked as IN_PROGRESS", id);
+        return ResponseUtil.success(result, "Tour started successfully");
     }
 
     @PatchMapping("/applications/{applicationId}/withdraw")

@@ -1,11 +1,13 @@
 package com.driverkonnect.backend.service.implementation;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourLocationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
 import com.driverkonnect.backend.entity.DriverVehicle;
+import com.driverkonnect.backend.entity.TourAssignment;
 import com.driverkonnect.backend.entity.TourDriverApplication;
 import com.driverkonnect.backend.entity.TourRequest;
 import com.driverkonnect.backend.entity.User;
@@ -13,6 +15,7 @@ import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.enums.VehicleApprovalStatus;
 import com.driverkonnect.backend.exception.CustomException;
 import com.driverkonnect.backend.repository.DriverVehicleRepository;
+import com.driverkonnect.backend.repository.TourAssignmentRepository;
 import com.driverkonnect.backend.repository.TourDriverApplicationRepository;
 import com.driverkonnect.backend.repository.TourRequestRepository;
 import com.driverkonnect.backend.repository.UserRepository;
@@ -23,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,6 +39,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
     private final TourDriverApplicationRepository tourDriverApplicationRepository;
     private final UserRepository userRepository;
     private final DriverVehicleRepository driverVehicleRepository;
+    private final TourAssignmentRepository tourAssignmentRepository;
 
     @Override
     @Transactional
@@ -128,6 +133,37 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         return toApplicationDto(application);
     }
 
+    @Override
+    @Transactional
+    public DriverActiveTourDto getMyActiveTour() {
+        String email = AuthUtil.getAuthenticatedUser().getUsername();
+        TourAssignment assignment = tourAssignmentRepository
+                .findActiveByDriverEmail(email, List.of(TourStatus.ASSIGNED, TourStatus.IN_PROGRESS))
+                .orElseThrow(() -> new CustomException("No active tour found", 404));
+        return toActiveTourDto(assignment);
+    }
+
+    @Override
+    @Transactional
+    public DriverActiveTourDto startTour(Long tourRequestId) {
+        String email = AuthUtil.getAuthenticatedUser().getUsername();
+        TourAssignment assignment = tourAssignmentRepository
+                .findByDriver_EmailAndTourRequest_Id(email, tourRequestId)
+                .orElseThrow(() -> new CustomException("Tour assignment not found", 404));
+
+        TourRequest tourRequest = assignment.getTourRequest();
+        if (tourRequest.getStatus() != TourStatus.ASSIGNED) {
+            throw new CustomException("Tour must be in ASSIGNED status to be started", 400);
+        }
+
+        tourRequest.setStatus(TourStatus.IN_PROGRESS);
+        tourRequest.setUpdatedAt(LocalDateTime.now());
+        tourRequestRepository.save(tourRequest);
+
+        log.debug("Driver {} started tour request ID: {}", email, tourRequestId);
+        return toActiveTourDto(assignment);
+    }
+
     private User resolveDriver(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("Driver account not found", 404));
@@ -170,6 +206,47 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setVehicleTypeName(t.getVehicleType().getName());
         dto.setStatus(t.getStatus().name());
         dto.setCreatedAt(t.getCreatedAt());
+        return dto;
+    }
+
+    private DriverActiveTourDto toActiveTourDto(TourAssignment assignment) {
+        TourRequest t = assignment.getTourRequest();
+        DriverActiveTourDto dto = new DriverActiveTourDto();
+        dto.setTourRequestId(t.getId());
+        dto.setTourName(t.getTourName());
+        dto.setTripType(t.getTripType().name());
+        dto.setStartDate(t.getStartDate());
+        dto.setEndDate(t.getEndDate());
+        dto.setDays(t.getDays());
+        dto.setNights(t.getNights());
+        dto.setPaxCount(t.getPaxCount());
+        dto.setTravellerNationality(t.getTravellerNationality().name());
+        dto.setVehicleTypeName(t.getVehicleType().getName());
+        dto.setEstimatedKm(t.getEstimatedKm());
+        dto.setPaymentTerm(t.getPaymentTerm().name());
+        dto.setSpecificRequirements(t.getSpecificRequirements());
+        dto.setSpecialConcerns(t.getSpecialConcerns());
+        dto.setStatus(t.getStatus().name());
+        dto.setPerKmRateSnapshot(assignment.getPerKmRateSnapshot());
+        if (assignment.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
+            dto.setEstimatedEarnings(
+                    assignment.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(t.getEstimatedKm())));
+        }
+        dto.setAssignedAt(assignment.getAssignedAt());
+
+        if (t.getLocations() != null) {
+            dto.setLocations(t.getLocations().stream().map(loc -> {
+                TourLocationResponseDto locDto = new TourLocationResponseDto();
+                locDto.setId(loc.getId());
+                locDto.setLocationType(loc.getLocationType().name());
+                locDto.setAddress(loc.getAddress());
+                locDto.setLatitude(loc.getLatitude());
+                locDto.setLongitude(loc.getLongitude());
+                locDto.setSequenceOrder(loc.getSequenceOrder());
+                return locDto;
+            }).toList());
+        }
+
         return dto;
     }
 

@@ -88,6 +88,7 @@ public class TourAssignmentServiceImpl implements TourAssignmentService {
         TourAssignment assignment = new TourAssignment();
         assignment.setTourRequest(tourRequest);
         assignment.setDriver(application.getDriver());
+        assignment.setPerKmRateSnapshot(application.getPerKmRateSnapshot());
         assignment.setAssignedAt(LocalDateTime.now());
         assignment.setUpdatedAt(LocalDateTime.now());
         assignment = tourAssignmentRepository.save(assignment);
