@@ -124,40 +124,37 @@ public class TourAssignmentServiceImpl implements TourAssignmentService {
 
     private TourDriverApplicationSummaryDto toApplicationSummaryDto(TourDriverApplication a) {
         User driver = a.getDriver();
-        TourDriverApplicationSummaryDto dto = new TourDriverApplicationSummaryDto();
-        dto.setId(a.getId());
-        dto.setDriverId(driver.getId());
-        dto.setDriverFirstName(driver.getFirstName());
-        dto.setDriverLastName(driver.getLastName());
-        dto.setDriverEmail(driver.getEmail());
-        if (a.getDriverVehicle() != null) {
-            dto.setVehicleId(a.getDriverVehicle().getId());
-            dto.setVehicleBrand(a.getDriverVehicle().getBrand());
-            dto.setVehicleModel(a.getDriverVehicle().getModel());
-            dto.setVehicleCategory(a.getDriverVehicle().getVehicleCategory().name());
-        }
-        dto.setPerKmRateSnapshot(a.getPerKmRateSnapshot());
-        dto.setNote(a.getNote());
-        dto.setStatusLabel(a.getTourApplicationStatus() != null
-                ? a.getTourApplicationStatus().getLabel()
-                : null);
-        dto.setIsWithdrawn(a.getIsWithdrawn());
-        dto.setAppliedAt(a.getAppliedAt());
-        dto.setUpdatedAt(a.getUpdatedAt());
-        return dto;
+        DriverVehicle v = a.getDriverVehicle();
+        return TourDriverApplicationSummaryDto.builder()
+                .id(a.getId())
+                .driverId(driver.getId())
+                .driverFirstName(driver.getFirstName())
+                .driverLastName(driver.getLastName())
+                .driverEmail(driver.getEmail())
+                .vehicleId(v != null ? v.getId() : null)
+                .vehicleBrand(v != null ? v.getBrand() : null)
+                .vehicleModel(v != null ? v.getModel() : null)
+                .vehicleCategory(v != null ? v.getVehicleCategory().name() : null)
+                .perKmRateSnapshot(a.getPerKmRateSnapshot())
+                .note(a.getNote())
+                .statusLabel(a.getTourApplicationStatus() != null ? a.getTourApplicationStatus().getLabel() : null)
+                .isWithdrawn(a.getIsWithdrawn())
+                .appliedAt(a.getAppliedAt())
+                .updatedAt(a.getUpdatedAt())
+                .build();
     }
 
     private TourAssignmentResponseDto toAssignmentDto(TourAssignment a) {
         User driver = a.getDriver();
-        TourAssignmentResponseDto dto = new TourAssignmentResponseDto();
-        dto.setId(a.getId());
-        dto.setTourRequestId(a.getTourRequest().getId());
-        dto.setTourName(a.getTourRequest().getTourName());
-        dto.setDriverId(driver.getId());
-        dto.setDriverFirstName(driver.getFirstName());
-        dto.setDriverLastName(driver.getLastName());
-        dto.setDriverEmail(driver.getEmail());
-        dto.setAssignedAt(a.getAssignedAt());
-        return dto;
+        return TourAssignmentResponseDto.builder()
+                .id(a.getId())
+                .tourRequestId(a.getTourRequest().getId())
+                .tourName(a.getTourRequest().getTourName())
+                .driverId(driver.getId())
+                .driverFirstName(driver.getFirstName())
+                .driverLastName(driver.getLastName())
+                .driverEmail(driver.getEmail())
+                .assignedAt(a.getAssignedAt())
+                .build();
     }
 }

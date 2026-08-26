@@ -165,52 +165,52 @@ public class DriverVehicleServiceImpl implements DriverVehicleService {
     }
 
     private DriverVehicleResponseDto toDriverResponseDto(DriverVehicle v) {
-        DriverVehicleResponseDto dto = new DriverVehicleResponseDto();
-        dto.setId(v.getId());
-        dto.setBrand(v.getBrand());
-        dto.setModel(v.getModel());
-        dto.setYear(v.getYear());
-        dto.setMileageKm(v.getMileageKm());
-        dto.setVehicleCategory(v.getVehicleCategory().name());
-        dto.setPerKmRate(v.getPerKmRate());
-        dto.setApprovalStatus(v.getApprovalStatus().name());
-        dto.setRejectionReason(v.getRejectionReason());
-        dto.setPhotoFrontUrl(v.getPhotoFrontUrl());
-        dto.setPhotoBackUrl(v.getPhotoBackUrl());
-        dto.setPhotoSideUrl(v.getPhotoSideUrl());
-        dto.setPhotoInteriorUrl(v.getPhotoInteriorUrl());
-        dto.setVehicleLicenceUrl(v.getVehicleLicenceUrl());
-        dto.setInsuranceUrl(v.getInsuranceUrl());
-        dto.setInsuranceExpiry(v.getInsuranceExpiry());
-        dto.setCreatedAt(v.getCreatedAt());
-        dto.setUpdatedAt(v.getUpdatedAt());
-        return dto;
+        return DriverVehicleResponseDto.builder()
+                .id(v.getId())
+                .brand(v.getBrand())
+                .model(v.getModel())
+                .year(v.getYear())
+                .mileageKm(v.getMileageKm())
+                .vehicleCategory(v.getVehicleCategory().name())
+                .perKmRate(v.getPerKmRate())
+                .approvalStatus(v.getApprovalStatus().name())
+                .rejectionReason(v.getRejectionReason())
+                .photoFrontUrl(v.getPhotoFrontUrl())
+                .photoBackUrl(v.getPhotoBackUrl())
+                .photoSideUrl(v.getPhotoSideUrl())
+                .photoInteriorUrl(v.getPhotoInteriorUrl())
+                .vehicleLicenceUrl(v.getVehicleLicenceUrl())
+                .insuranceUrl(v.getInsuranceUrl())
+                .insuranceExpiry(v.getInsuranceExpiry())
+                .createdAt(v.getCreatedAt())
+                .updatedAt(v.getUpdatedAt())
+                .build();
     }
 
     private AdminDriverVehicleSummaryDto toAdminSummaryDto(DriverVehicle v) {
-        AdminDriverVehicleSummaryDto dto = new AdminDriverVehicleSummaryDto();
-        dto.setId(v.getId());
-        dto.setDriverId(v.getDriver().getId());
-        dto.setDriverFirstName(v.getDriver().getFirstName());
-        dto.setDriverLastName(v.getDriver().getLastName());
-        dto.setDriverEmail(v.getDriver().getEmail());
-        dto.setBrand(v.getBrand());
-        dto.setModel(v.getModel());
-        dto.setYear(v.getYear());
-        dto.setMileageKm(v.getMileageKm());
-        dto.setVehicleCategory(v.getVehicleCategory().name());
-        dto.setPerKmRate(v.getPerKmRate());
-        dto.setApprovalStatus(v.getApprovalStatus().name());
-        dto.setRejectionReason(v.getRejectionReason());
-        dto.setPhotoFrontUrl(v.getPhotoFrontUrl());
-        dto.setPhotoBackUrl(v.getPhotoBackUrl());
-        dto.setPhotoSideUrl(v.getPhotoSideUrl());
-        dto.setPhotoInteriorUrl(v.getPhotoInteriorUrl());
-        dto.setVehicleLicenceUrl(v.getVehicleLicenceUrl());
-        dto.setInsuranceUrl(v.getInsuranceUrl());
-        dto.setInsuranceExpiry(v.getInsuranceExpiry());
-        dto.setCreatedAt(v.getCreatedAt());
-        dto.setUpdatedAt(v.getUpdatedAt());
-        return dto;
+        return AdminDriverVehicleSummaryDto.builder()
+                .id(v.getId())
+                .driverId(v.getDriver().getId())
+                .driverFirstName(v.getDriver().getFirstName())
+                .driverLastName(v.getDriver().getLastName())
+                .driverEmail(v.getDriver().getEmail())
+                .brand(v.getBrand())
+                .model(v.getModel())
+                .year(v.getYear())
+                .mileageKm(v.getMileageKm())
+                .vehicleCategory(v.getVehicleCategory().name())
+                .perKmRate(v.getPerKmRate())
+                .approvalStatus(v.getApprovalStatus().name())
+                .rejectionReason(v.getRejectionReason())
+                .photoFrontUrl(v.getPhotoFrontUrl())
+                .photoBackUrl(v.getPhotoBackUrl())
+                .photoSideUrl(v.getPhotoSideUrl())
+                .photoInteriorUrl(v.getPhotoInteriorUrl())
+                .vehicleLicenceUrl(v.getVehicleLicenceUrl())
+                .insuranceUrl(v.getInsuranceUrl())
+                .insuranceExpiry(v.getInsuranceExpiry())
+                .createdAt(v.getCreatedAt())
+                .updatedAt(v.getUpdatedAt())
+                .build();
     }
 }

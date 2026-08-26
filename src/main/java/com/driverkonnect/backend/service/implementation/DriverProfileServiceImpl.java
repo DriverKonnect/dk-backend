@@ -84,40 +84,36 @@ public class DriverProfileServiceImpl implements DriverProfileService {
     }
 
     private DriverProfileDto toProfileDto(User user, DriverApplication application) {
-        DriverProfileDto dto = new DriverProfileDto();
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        dto.setEmail(user.getEmail());
-        dto.setMemberSinceYear(user.getCreatedAt() != null ? user.getCreatedAt().getYear() : null);
-        dto.setIsVerified(Boolean.TRUE.equals(user.getIsActive()));
-        dto.setRating(tourAssignmentRepository.getAverageRatingByDriverEmail(user.getEmail()));
-        dto.setLifetimeTours(tourAssignmentRepository.countByDriver_Email(user.getEmail()));
-        dto.setOnTimeRate(null);
-        dto.setDateOfBirth(application.getDateOfBirth());
-        dto.setPhone(application.getPhone());
-        dto.setWhatsapp(application.getWhatsapp());
-        dto.setNicNumber(application.getNicNumber());
-        dto.setLanguagesSpoken(parseLanguages(application.getLanguagesSpoken()));
-        dto.setYearsOfExperience(application.getYearsOfExperience());
-        dto.setAvailability(application.getAvailability() != null
-                ? application.getAvailability().name() : null);
-
-        if (application.getDocuments() != null) {
-            List<DriverProfileDocumentDto> docs = application.getDocuments().stream()
-                    .map(this::toDocumentDto).collect(Collectors.toList());
-            dto.setDocuments(docs);
-        }
-
-        return dto;
+        List<DriverProfileDocumentDto> docs = application.getDocuments() != null
+                ? application.getDocuments().stream().map(this::toDocumentDto).collect(Collectors.toList())
+                : null;
+        return DriverProfileDto.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .memberSinceYear(user.getCreatedAt() != null ? user.getCreatedAt().getYear() : null)
+                .isVerified(Boolean.TRUE.equals(user.getIsActive()))
+                .rating(tourAssignmentRepository.getAverageRatingByDriverEmail(user.getEmail()))
+                .lifetimeTours(tourAssignmentRepository.countByDriver_Email(user.getEmail()))
+                .onTimeRate(null)
+                .dateOfBirth(application.getDateOfBirth())
+                .phone(application.getPhone())
+                .whatsapp(application.getWhatsapp())
+                .nicNumber(application.getNicNumber())
+                .languagesSpoken(parseLanguages(application.getLanguagesSpoken()))
+                .yearsOfExperience(application.getYearsOfExperience())
+                .availability(application.getAvailability() != null ? application.getAvailability().name() : null)
+                .documents(docs)
+                .build();
     }
 
     private DriverProfileDocumentDto toDocumentDto(DriverDocument doc) {
-        DriverProfileDocumentDto dto = new DriverProfileDocumentDto();
-        dto.setDocumentType(doc.getDocumentType().name());
-        dto.setFileName(doc.getFileName());
-        dto.setFilePath(doc.getFilePath());
-        dto.setUploadedAt(doc.getUploadedAt());
-        return dto;
+        return DriverProfileDocumentDto.builder()
+                .documentType(doc.getDocumentType().name())
+                .fileName(doc.getFileName())
+                .filePath(doc.getFilePath())
+                .uploadedAt(doc.getUploadedAt())
+                .build();
     }
 
     private List<String> parseLanguages(String languagesSpoken) {

@@ -162,16 +162,16 @@ public class TourApplicationServiceImpl implements TourApplicationService {
                 .findByStatusOrderByCreatedAtDesc(TourStatus.PUBLISHED)
                 .stream().limit(5).map(this::toSummaryDto).toList();
 
-        DriverDashboardDto dto = new DriverDashboardDto();
-        dto.setFirstName(driver.getFirstName());
-        dto.setLastName(driver.getLastName());
-        dto.setIsVerified(Boolean.TRUE.equals(driver.getIsActive()));
-        dto.setRating(tourAssignmentRepository.getAverageRatingByDriverEmail(email));
-        dto.setWeeklyToursCount(tourAssignmentRepository.countAssignmentsInWeek(email, weekStart, weekEnd));
-        dto.setAcceptanceRate(acceptanceRate);
-        dto.setOnTimeRate(null);
-        dto.setNewTourRequests(newTours);
-        return dto;
+        return DriverDashboardDto.builder()
+                .firstName(driver.getFirstName())
+                .lastName(driver.getLastName())
+                .isVerified(Boolean.TRUE.equals(driver.getIsActive()))
+                .rating(tourAssignmentRepository.getAverageRatingByDriverEmail(email))
+                .weeklyToursCount(tourAssignmentRepository.countAssignmentsInWeek(email, weekStart, weekEnd))
+                .acceptanceRate(acceptanceRate)
+                .onTimeRate(null)
+                .newTourRequests(newTours)
+                .build();
     }
 
     @Override
@@ -206,12 +206,12 @@ public class TourApplicationServiceImpl implements TourApplicationService {
                 .mapToInt(TourAssignment::getRating)
                 .average();
 
-        DriverHistorySummaryDto summary = new DriverHistorySummaryDto();
-        summary.setCompletedCount(completed.size());
-        summary.setLifetimeEarned(lifetimeEarned);
-        summary.setAverageRating(avgRating.isPresent() ? avgRating.getAsDouble() : null);
-        summary.setTours(pagedTours);
-        return summary;
+        return DriverHistorySummaryDto.builder()
+                .completedCount(completed.size())
+                .lifetimeEarned(lifetimeEarned)
+                .averageRating(avgRating.isPresent() ? avgRating.getAsDouble() : null)
+                .tours(pagedTours)
+                .build();
     }
 
     @Override
@@ -251,135 +251,128 @@ public class TourApplicationServiceImpl implements TourApplicationService {
     }
 
     private TourApplicationResponseDto toApplicationDto(TourDriverApplication a) {
-        TourApplicationResponseDto dto = new TourApplicationResponseDto();
-        dto.setId(a.getId());
-        dto.setTourRequestId(a.getTourRequest().getId());
-        dto.setTourName(a.getTourRequest().getTourName());
-        dto.setStartDate(a.getTourRequest().getStartDate());
-        dto.setEndDate(a.getTourRequest().getEndDate());
-        dto.setVehicleTypeName(a.getTourRequest().getVehicleType().getName());
-        if (a.getDriverVehicle() != null) {
-            dto.setVehicleId(a.getDriverVehicle().getId());
-            dto.setVehicleBrand(a.getDriverVehicle().getBrand());
-            dto.setVehicleModel(a.getDriverVehicle().getModel());
-            dto.setVehicleCategory(a.getDriverVehicle().getVehicleCategory().name());
-        }
-        dto.setPerKmRateSnapshot(a.getPerKmRateSnapshot());
-        dto.setNote(a.getNote());
-        dto.setStatusLabel(a.getTourApplicationStatus() != null
-                ? a.getTourApplicationStatus().getLabel()
-                : null);
-        dto.setIsWithdrawn(a.getIsWithdrawn());
-        dto.setAppliedAt(a.getAppliedAt());
-        dto.setUpdatedAt(a.getUpdatedAt());
-        return dto;
+        DriverVehicle v = a.getDriverVehicle();
+        return TourApplicationResponseDto.builder()
+                .id(a.getId())
+                .tourRequestId(a.getTourRequest().getId())
+                .tourName(a.getTourRequest().getTourName())
+                .startDate(a.getTourRequest().getStartDate())
+                .endDate(a.getTourRequest().getEndDate())
+                .vehicleTypeName(a.getTourRequest().getVehicleType().getName())
+                .vehicleId(v != null ? v.getId() : null)
+                .vehicleBrand(v != null ? v.getBrand() : null)
+                .vehicleModel(v != null ? v.getModel() : null)
+                .vehicleCategory(v != null ? v.getVehicleCategory().name() : null)
+                .perKmRateSnapshot(a.getPerKmRateSnapshot())
+                .note(a.getNote())
+                .statusLabel(a.getTourApplicationStatus() != null ? a.getTourApplicationStatus().getLabel() : null)
+                .isWithdrawn(a.getIsWithdrawn())
+                .appliedAt(a.getAppliedAt())
+                .updatedAt(a.getUpdatedAt())
+                .build();
     }
 
     private TourRequestSummaryDto toSummaryDto(TourRequest t) {
-        TourRequestSummaryDto dto = new TourRequestSummaryDto();
-        dto.setId(t.getId());
-        dto.setTourName(t.getTourName());
-        dto.setTripType(t.getTripType().name());
-        dto.setTravellerNationality(t.getTravellerNationality().name());
-        dto.setStartDate(t.getStartDate());
-        dto.setEndDate(t.getEndDate());
-        dto.setPaxCount(t.getPaxCount());
-        dto.setVehicleTypeName(t.getVehicleType().getName());
-        dto.setStatus(t.getStatus().name());
-        dto.setCreatedAt(t.getCreatedAt());
-        return dto;
+        return TourRequestSummaryDto.builder()
+                .id(t.getId())
+                .tourName(t.getTourName())
+                .tripType(t.getTripType().name())
+                .travellerNationality(t.getTravellerNationality().name())
+                .startDate(t.getStartDate())
+                .endDate(t.getEndDate())
+                .paxCount(t.getPaxCount())
+                .vehicleTypeName(t.getVehicleType().getName())
+                .status(t.getStatus().name())
+                .createdAt(t.getCreatedAt())
+                .build();
     }
 
     private DriverTourHistoryItemDto toHistoryItemDto(TourAssignment a) {
         TourRequest t = a.getTourRequest();
-        DriverTourHistoryItemDto dto = new DriverTourHistoryItemDto();
-        dto.setTourRequestId(t.getId());
-        dto.setTourName(t.getTourName());
-        dto.setTripType(t.getTripType().name());
-        dto.setStatus(t.getStatus().name());
-        dto.setStartDate(t.getStartDate());
-        dto.setEndDate(t.getEndDate());
-        dto.setRating(a.getRating());
-        if (a.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
-            dto.setEstimatedEarnings(a.getPerKmRateSnapshot().multiply(t.getEstimatedKm()));
-        }
-        return dto;
+        BigDecimal earnings = a.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null
+                ? a.getPerKmRateSnapshot().multiply(t.getEstimatedKm())
+                : null;
+        return DriverTourHistoryItemDto.builder()
+                .tourRequestId(t.getId())
+                .tourName(t.getTourName())
+                .tripType(t.getTripType().name())
+                .status(t.getStatus().name())
+                .startDate(t.getStartDate())
+                .endDate(t.getEndDate())
+                .rating(a.getRating())
+                .estimatedEarnings(earnings)
+                .build();
     }
 
     private DriverActiveTourDto toActiveTourDto(TourAssignment assignment) {
         TourRequest t = assignment.getTourRequest();
-        DriverActiveTourDto dto = new DriverActiveTourDto();
-        dto.setTourRequestId(t.getId());
-        dto.setTourName(t.getTourName());
-        dto.setTripType(t.getTripType().name());
-        dto.setStartDate(t.getStartDate());
-        dto.setEndDate(t.getEndDate());
-        dto.setDays(t.getDays());
-        dto.setNights(t.getNights());
-        dto.setPaxCount(t.getPaxCount());
-        dto.setTravellerNationality(t.getTravellerNationality().name());
-        dto.setVehicleTypeName(t.getVehicleType().getName());
-        dto.setEstimatedKm(t.getEstimatedKm());
-        dto.setPaymentTerm(t.getPaymentTerm().name());
-        dto.setSpecificRequirements(t.getSpecificRequirements());
-        dto.setSpecialConcerns(t.getSpecialConcerns());
-        dto.setStatus(t.getStatus().name());
-        dto.setPerKmRateSnapshot(assignment.getPerKmRateSnapshot());
-        if (assignment.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
-            dto.setEstimatedEarnings(assignment.getPerKmRateSnapshot().multiply(t.getEstimatedKm()));
-        }
-        dto.setAssignedAt(assignment.getAssignedAt());
-
-        if (t.getLocations() != null) {
-            dto.setLocations(t.getLocations().stream().map(loc -> {
-                TourLocationResponseDto locDto = new TourLocationResponseDto();
-                locDto.setId(loc.getId());
-                locDto.setLocationType(loc.getLocationType().name());
-                locDto.setAddress(loc.getAddress());
-                locDto.setLatitude(loc.getLatitude());
-                locDto.setLongitude(loc.getLongitude());
-                locDto.setSequenceOrder(loc.getSequenceOrder());
-                return locDto;
-            }).toList());
-        }
-
-        return dto;
+        BigDecimal earnings = assignment.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null
+                ? assignment.getPerKmRateSnapshot().multiply(t.getEstimatedKm())
+                : null;
+        List<TourLocationResponseDto> locations = t.getLocations() != null
+                ? t.getLocations().stream().map(loc -> TourLocationResponseDto.builder()
+                        .id(loc.getId())
+                        .locationType(loc.getLocationType().name())
+                        .address(loc.getAddress())
+                        .latitude(loc.getLatitude())
+                        .longitude(loc.getLongitude())
+                        .sequenceOrder(loc.getSequenceOrder())
+                        .build()).toList()
+                : null;
+        return DriverActiveTourDto.builder()
+                .tourRequestId(t.getId())
+                .tourName(t.getTourName())
+                .tripType(t.getTripType().name())
+                .startDate(t.getStartDate())
+                .endDate(t.getEndDate())
+                .days(t.getDays())
+                .nights(t.getNights())
+                .paxCount(t.getPaxCount())
+                .travellerNationality(t.getTravellerNationality().name())
+                .vehicleTypeName(t.getVehicleType().getName())
+                .estimatedKm(t.getEstimatedKm())
+                .paymentTerm(t.getPaymentTerm().name())
+                .specificRequirements(t.getSpecificRequirements())
+                .specialConcerns(t.getSpecialConcerns())
+                .status(t.getStatus().name())
+                .perKmRateSnapshot(assignment.getPerKmRateSnapshot())
+                .estimatedEarnings(earnings)
+                .assignedAt(assignment.getAssignedAt())
+                .locations(locations)
+                .build();
     }
 
     private TourRequestResponseDto toResponseDto(TourRequest t) {
-        TourRequestResponseDto dto = new TourRequestResponseDto();
-        dto.setId(t.getId());
-        dto.setTourName(t.getTourName());
-        dto.setTripType(t.getTripType().name());
-        dto.setTravellerNationality(t.getTravellerNationality().name());
-        dto.setStartDate(t.getStartDate());
-        dto.setEndDate(t.getEndDate());
-        dto.setDays(t.getDays());
-        dto.setNights(t.getNights());
-        dto.setPaxCount(t.getPaxCount());
-        dto.setVehicleTypeId(t.getVehicleType().getId());
-        dto.setVehicleTypeName(t.getVehicleType().getName());
-        dto.setEstimatedKm(t.getEstimatedKm());
-        dto.setSpecificRequirements(t.getSpecificRequirements());
-        dto.setSpecialConcerns(t.getSpecialConcerns());
-        dto.setPaymentTerm(t.getPaymentTerm().name());
-        dto.setStatus(t.getStatus().name());
-        dto.setCreatedAt(t.getCreatedAt());
-        dto.setUpdatedAt(t.getUpdatedAt());
-
-        if (t.getLocations() != null) {
-            dto.setLocations(t.getLocations().stream().map(loc -> {
-                TourLocationResponseDto locDto = new TourLocationResponseDto();
-                locDto.setId(loc.getId());
-                locDto.setLocationType(loc.getLocationType().name());
-                locDto.setAddress(loc.getAddress());
-                locDto.setLatitude(loc.getLatitude());
-                locDto.setLongitude(loc.getLongitude());
-                locDto.setSequenceOrder(loc.getSequenceOrder());
-                return locDto;
-            }).toList());
-        }
-
-        return dto;
+        List<TourLocationResponseDto> locations = t.getLocations() != null
+                ? t.getLocations().stream().map(loc -> TourLocationResponseDto.builder()
+                        .id(loc.getId())
+                        .locationType(loc.getLocationType().name())
+                        .address(loc.getAddress())
+                        .latitude(loc.getLatitude())
+                        .longitude(loc.getLongitude())
+                        .sequenceOrder(loc.getSequenceOrder())
+                        .build()).toList()
+                : null;
+        return TourRequestResponseDto.builder()
+                .id(t.getId())
+                .tourName(t.getTourName())
+                .tripType(t.getTripType().name())
+                .travellerNationality(t.getTravellerNationality().name())
+                .startDate(t.getStartDate())
+                .endDate(t.getEndDate())
+                .days(t.getDays())
+                .nights(t.getNights())
+                .paxCount(t.getPaxCount())
+                .vehicleTypeId(t.getVehicleType().getId())
+                .vehicleTypeName(t.getVehicleType().getName())
+                .estimatedKm(t.getEstimatedKm())
+                .specificRequirements(t.getSpecificRequirements())
+                .specialConcerns(t.getSpecialConcerns())
+                .paymentTerm(t.getPaymentTerm().name())
+                .status(t.getStatus().name())
+                .createdAt(t.getCreatedAt())
+                .updatedAt(t.getUpdatedAt())
+                .locations(locations)
+                .build();
     }
 }
