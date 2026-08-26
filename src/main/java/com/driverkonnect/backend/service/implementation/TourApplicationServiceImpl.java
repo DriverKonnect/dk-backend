@@ -2,6 +2,8 @@ package com.driverkonnect.backend.service.implementation;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
 import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverHistorySummaryDto;
+import com.driverkonnect.backend.dto.response.driver.DriverTourHistoryItemDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourLocationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
@@ -14,6 +16,7 @@ import com.driverkonnect.backend.entity.User;
 import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.enums.VehicleApprovalStatus;
 import com.driverkonnect.backend.exception.CustomException;
+import com.driverkonnect.backend.generics.PagedResponseDto;
 import com.driverkonnect.backend.repository.DriverVehicleRepository;
 import com.driverkonnect.backend.repository.TourAssignmentRepository;
 import com.driverkonnect.backend.repository.TourDriverApplicationRepository;
@@ -21,6 +24,8 @@ import com.driverkonnect.backend.repository.TourRequestRepository;
 import com.driverkonnect.backend.repository.UserRepository;
 import com.driverkonnect.backend.service.TourApplicationService;
 import com.driverkonnect.backend.util.AuthUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +34,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.OptionalDouble;
 
 @Slf4j
 @Service
@@ -135,6 +141,46 @@ public class TourApplicationServiceImpl implements TourApplicationService {
 
     @Override
     @Transactional
+    public DriverHistorySummaryDto getMyHistory(int page, int size) {
+        String email = AuthUtil.getAuthenticatedUser().getUsername();
+        List<TourStatus> historyStatuses = List.of(TourStatus.COMPLETED, TourStatus.CANCELLED);
+
+        // Paginated list for display
+        Page<TourAssignment> assignmentPage =
+                tourAssignmentRepository.findByDriver_EmailAndTourRequest_StatusInOrderByAssignedAtDesc(
+                        email, historyStatuses, PageRequest.of(page, size));
+
+        List<DriverTourHistoryItemDto> items = assignmentPage.getContent()
+                .stream().map(this::toHistoryItemDto).toList();
+
+        PagedResponseDto<DriverTourHistoryItemDto> pagedTours = new PagedResponseDto<>(
+                items, assignmentPage.getNumber(), assignmentPage.getSize(),
+                assignmentPage.getTotalElements(), assignmentPage.getTotalPages());
+
+        // Stats — computed from all COMPLETED records only
+        List<TourAssignment> completed = tourAssignmentRepository
+                .findByDriver_EmailAndTourRequest_Status(email, TourStatus.COMPLETED);
+
+        BigDecimal lifetimeEarned = completed.stream()
+                .filter(a -> a.getPerKmRateSnapshot() != null && a.getTourRequest().getEstimatedKm() != null)
+                .map(a -> a.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(a.getTourRequest().getEstimatedKm())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        OptionalDouble avgRating = completed.stream()
+                .filter(a -> a.getRating() != null)
+                .mapToInt(TourAssignment::getRating)
+                .average();
+
+        DriverHistorySummaryDto summary = new DriverHistorySummaryDto();
+        summary.setCompletedCount(completed.size());
+        summary.setLifetimeEarned(lifetimeEarned);
+        summary.setAverageRating(avgRating.isPresent() ? avgRating.getAsDouble() : null);
+        summary.setTours(pagedTours);
+        return summary;
+    }
+
+    @Override
+    @Transactional
     public DriverActiveTourDto getMyActiveTour() {
         String email = AuthUtil.getAuthenticatedUser().getUsername();
         TourAssignment assignment = tourAssignmentRepository
@@ -206,6 +252,23 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setVehicleTypeName(t.getVehicleType().getName());
         dto.setStatus(t.getStatus().name());
         dto.setCreatedAt(t.getCreatedAt());
+        return dto;
+    }
+
+    private DriverTourHistoryItemDto toHistoryItemDto(TourAssignment a) {
+        TourRequest t = a.getTourRequest();
+        DriverTourHistoryItemDto dto = new DriverTourHistoryItemDto();
+        dto.setTourRequestId(t.getId());
+        dto.setTourName(t.getTourName());
+        dto.setTripType(t.getTripType().name());
+        dto.setStatus(t.getStatus().name());
+        dto.setStartDate(t.getStartDate());
+        dto.setEndDate(t.getEndDate());
+        dto.setRating(a.getRating());
+        if (a.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
+            dto.setEstimatedEarnings(
+                    a.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(t.getEstimatedKm())));
+        }
         return dto;
     }
 

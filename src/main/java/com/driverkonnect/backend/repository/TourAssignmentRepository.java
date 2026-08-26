@@ -2,6 +2,8 @@ package com.driverkonnect.backend.repository;
 
 import com.driverkonnect.backend.entity.TourAssignment;
 import com.driverkonnect.backend.enums.TourStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +25,9 @@ public interface TourAssignmentRepository extends JpaRepository<TourAssignment, 
 
     List<TourAssignment> findByDriver_EmailAndTourRequest_StatusInOrderByAssignedAtDesc(
             String email, List<TourStatus> statuses);
+
+    Page<TourAssignment> findByDriver_EmailAndTourRequest_StatusInOrderByAssignedAtDesc(
+            String email, List<TourStatus> statuses, Pageable pageable);
+
+    List<TourAssignment> findByDriver_EmailAndTourRequest_Status(String email, TourStatus status);
 }

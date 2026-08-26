@@ -2,6 +2,7 @@ package com.driverkonnect.backend.controller;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
 import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverHistorySummaryDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
@@ -78,6 +79,19 @@ public class DriverTourController {
         List<TourApplicationResponseDto> result = tourApplicationService.getMyApplications();
         log.info("Successfully retrieved {} tour applications", result.size());
         return ResponseUtil.success(result, "Applications retrieved successfully");
+    }
+
+    @GetMapping("/history")
+    @Operation(
+            summary = "Get tour history",
+            description = "Returns a paginated list of the driver's completed and cancelled tours, plus lifetime stats: total earned (sum of estimatedKm × per-km rate for completed tours), completed count, and average rating. Ordered by assignment date descending."
+    )
+    public ResponseEntity<Response<DriverHistorySummaryDto>> getMyHistory(
+            @Parameter(description = "Page number (0-indexed, default 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size (default 10)") @RequestParam(defaultValue = "10") int size) {
+        log.info("Driver requesting tour history — page={}, size={}", page, size);
+        DriverHistorySummaryDto result = tourApplicationService.getMyHistory(page, size);
+        return ResponseUtil.success(result, "Tour history retrieved successfully");
     }
 
     @GetMapping("/active")
