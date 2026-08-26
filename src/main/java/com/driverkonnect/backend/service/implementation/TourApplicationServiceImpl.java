@@ -2,6 +2,7 @@ package com.driverkonnect.backend.service.implementation;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
 import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverDashboardDto;
 import com.driverkonnect.backend.dto.response.driver.DriverHistorySummaryDto;
 import com.driverkonnect.backend.dto.response.driver.DriverTourHistoryItemDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
@@ -32,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.OptionalDouble;
@@ -141,6 +144,38 @@ public class TourApplicationServiceImpl implements TourApplicationService {
 
     @Override
     @Transactional
+    public DriverDashboardDto getDashboard() {
+        String email = AuthUtil.getAuthenticatedUser().getUsername();
+        User driver = resolveDriver(email);
+
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+        LocalDate weekEnd = today.with(DayOfWeek.SUNDAY);
+
+        long assignedCount = tourAssignmentRepository.countByDriver_Email(email);
+        long totalApplications = tourDriverApplicationRepository.countByDriver_EmailAndIsWithdrawnFalse(email);
+        Double acceptanceRate = totalApplications > 0
+                ? Math.round((double) assignedCount / totalApplications * 1000.0) / 10.0
+                : null;
+
+        List<TourRequestSummaryDto> newTours = tourRequestRepository
+                .findByStatusOrderByCreatedAtDesc(TourStatus.PUBLISHED)
+                .stream().limit(5).map(this::toSummaryDto).toList();
+
+        DriverDashboardDto dto = new DriverDashboardDto();
+        dto.setFirstName(driver.getFirstName());
+        dto.setLastName(driver.getLastName());
+        dto.setIsVerified(Boolean.TRUE.equals(driver.getIsActive()));
+        dto.setRating(tourAssignmentRepository.getAverageRatingByDriverEmail(email));
+        dto.setWeeklyToursCount(tourAssignmentRepository.countAssignmentsInWeek(email, weekStart, weekEnd));
+        dto.setAcceptanceRate(acceptanceRate);
+        dto.setOnTimeRate(null);
+        dto.setNewTourRequests(newTours);
+        return dto;
+    }
+
+    @Override
+    @Transactional
     public DriverHistorySummaryDto getMyHistory(int page, int size) {
         String email = AuthUtil.getAuthenticatedUser().getUsername();
         List<TourStatus> historyStatuses = List.of(TourStatus.COMPLETED, TourStatus.CANCELLED);
@@ -163,7 +198,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
 
         BigDecimal lifetimeEarned = completed.stream()
                 .filter(a -> a.getPerKmRateSnapshot() != null && a.getTourRequest().getEstimatedKm() != null)
-                .map(a -> a.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(a.getTourRequest().getEstimatedKm())))
+                .map(a -> a.getPerKmRateSnapshot().multiply(a.getTourRequest().getEstimatedKm()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         OptionalDouble avgRating = completed.stream()
@@ -266,8 +301,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setEndDate(t.getEndDate());
         dto.setRating(a.getRating());
         if (a.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
-            dto.setEstimatedEarnings(
-                    a.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(t.getEstimatedKm())));
+            dto.setEstimatedEarnings(a.getPerKmRateSnapshot().multiply(t.getEstimatedKm()));
         }
         return dto;
     }
@@ -292,8 +326,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setStatus(t.getStatus().name());
         dto.setPerKmRateSnapshot(assignment.getPerKmRateSnapshot());
         if (assignment.getPerKmRateSnapshot() != null && t.getEstimatedKm() != null) {
-            dto.setEstimatedEarnings(
-                    assignment.getPerKmRateSnapshot().multiply(BigDecimal.valueOf(t.getEstimatedKm())));
+            dto.setEstimatedEarnings(assignment.getPerKmRateSnapshot().multiply(t.getEstimatedKm()));
         }
         dto.setAssignedAt(assignment.getAssignedAt());
 

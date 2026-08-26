@@ -2,6 +2,7 @@ package com.driverkonnect.backend.service;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
 import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverDashboardDto;
 import com.driverkonnect.backend.dto.response.driver.DriverHistorySummaryDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
@@ -18,4 +19,5 @@ public interface TourApplicationService {
     DriverActiveTourDto getMyActiveTour();
     DriverActiveTourDto startTour(Long tourRequestId);
     DriverHistorySummaryDto getMyHistory(int page, int size);
+    DriverDashboardDto getDashboard();
 }

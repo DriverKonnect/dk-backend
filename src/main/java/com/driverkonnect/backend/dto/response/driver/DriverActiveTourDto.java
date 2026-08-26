@@ -21,7 +21,7 @@ public class DriverActiveTourDto {
     private Integer paxCount;
     private String travellerNationality;
     private String vehicleTypeName;
-    private Integer estimatedKm;
+    private BigDecimal estimatedKm;
     private String paymentTerm;
     private String specificRequirements;
     private String specialConcerns;
