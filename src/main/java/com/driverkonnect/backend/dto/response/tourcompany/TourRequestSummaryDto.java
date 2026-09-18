@@ -19,6 +19,8 @@ public class TourRequestSummaryDto {
     private String travellerNationality;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Integer days;
+    private Integer nights;
     private Integer paxCount;
     private String vehicleTypeName;
     private String status;

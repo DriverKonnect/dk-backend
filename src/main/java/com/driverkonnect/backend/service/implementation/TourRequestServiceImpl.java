@@ -210,6 +210,8 @@ public class TourRequestServiceImpl implements TourRequestService {
         dto.setTravellerNationality(t.getTravellerNationality().name());
         dto.setStartDate(t.getStartDate());
         dto.setEndDate(t.getEndDate());
+        dto.setDays(t.getDays());
+        dto.setNights(t.getNights());
         dto.setPaxCount(t.getPaxCount());
         dto.setVehicleTypeName(t.getVehicleType().getName());
         dto.setStatus(t.getStatus().name());
