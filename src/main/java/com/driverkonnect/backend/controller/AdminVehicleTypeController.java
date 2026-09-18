@@ -41,6 +41,7 @@ public class AdminVehicleTypeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TOUR_COMPANY')")
     @Operation(
             summary = "List all vehicle types",
             description = "Returns all vehicle types ordered alphabetically by name, including both active and inactive ones."
