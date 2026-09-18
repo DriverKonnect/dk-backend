@@ -58,6 +58,10 @@ public class TourRequestDto {
     @NotNull(message = "Payment term is required")
     private PaymentTerm paymentTerm;
 
+    @Min(value = 1, message = "Advance percentage must be at least 1")
+    @Max(value = 99, message = "Advance percentage must not exceed 99")
+    private Integer advancePercentage;
+
     @NotEmpty(message = "At least one location is required")
     @Valid
     private List<TourLocationDto> locations;

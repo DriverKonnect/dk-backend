@@ -28,6 +28,7 @@ public class TourRequestResponseDto {
     private String specificRequirements;
     private String specialConcerns;
     private String paymentTerm;
+    private Integer advancePercentage;
     private String status;
     private List<TourLocationResponseDto> locations;
     private LocalDateTime createdAt;

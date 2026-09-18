@@ -73,6 +73,9 @@ public class TourRequest {
     @Column(name = "payment_term", nullable = false, length = 50)
     private PaymentTerm paymentTerm;
 
+    @Column(name = "advance_percentage")
+    private Integer advancePercentage;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private TourStatus status = TourStatus.DRAFT;

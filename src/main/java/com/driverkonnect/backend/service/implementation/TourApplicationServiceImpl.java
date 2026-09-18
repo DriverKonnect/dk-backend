@@ -171,6 +171,7 @@ public class TourApplicationServiceImpl implements TourApplicationService {
         dto.setSpecificRequirements(t.getSpecificRequirements());
         dto.setSpecialConcerns(t.getSpecialConcerns());
         dto.setPaymentTerm(t.getPaymentTerm().name());
+        dto.setAdvancePercentage(t.getAdvancePercentage());
         dto.setStatus(t.getStatus().name());
         dto.setCreatedAt(t.getCreatedAt());
         dto.setUpdatedAt(t.getUpdatedAt());

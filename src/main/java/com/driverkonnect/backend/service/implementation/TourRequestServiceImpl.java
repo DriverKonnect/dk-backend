@@ -7,6 +7,7 @@ import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
 import com.driverkonnect.backend.entity.*;
 import com.driverkonnect.backend.enums.LocationType;
+import com.driverkonnect.backend.enums.PaymentTerm;
 import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.exception.CustomException;
 import com.driverkonnect.backend.generics.PagedResponseDto;
@@ -44,6 +45,7 @@ public class TourRequestServiceImpl implements TourRequestService {
 
         validateDates(dto);
         validateLocations(dto.getLocations());
+        validatePaymentTerm(dto);
         VehicleType vehicleType = resolveVehicleType(dto.getVehicleTypeId());
 
         TourRequest tourRequest = new TourRequest();
@@ -105,6 +107,7 @@ public class TourRequestServiceImpl implements TourRequestService {
 
         validateDates(dto);
         validateLocations(dto.getLocations());
+        validatePaymentTerm(dto);
         VehicleType vehicleType = resolveVehicleType(dto.getVehicleTypeId());
 
         applyFields(tourRequest, dto, vehicleType);
@@ -161,6 +164,15 @@ public class TourRequestServiceImpl implements TourRequestService {
         }
     }
 
+    private void validatePaymentTerm(TourRequestDto dto) {
+        if (dto.getPaymentTerm() == PaymentTerm.HALF_ADVANCE && dto.getAdvancePercentage() == null) {
+            throw new CustomException("Advance percentage is required when payment term is HALF_ADVANCE", 400);
+        }
+        if (dto.getPaymentTerm() != PaymentTerm.HALF_ADVANCE && dto.getAdvancePercentage() != null) {
+            throw new CustomException("Advance percentage is only applicable when payment term is HALF_ADVANCE", 400);
+        }
+    }
+
     private void validateLocations(List<TourLocationDto> locations) {
         boolean hasPickup = locations.stream()
                 .anyMatch(l -> l.getLocationType() == LocationType.PICKUP);
@@ -185,6 +197,7 @@ public class TourRequestServiceImpl implements TourRequestService {
         tourRequest.setSpecificRequirements(dto.getSpecificRequirements());
         tourRequest.setSpecialConcerns(dto.getSpecialConcerns());
         tourRequest.setPaymentTerm(dto.getPaymentTerm());
+        tourRequest.setAdvancePercentage(dto.getAdvancePercentage());
     }
 
     private List<TourLocation> buildLocations(List<TourLocationDto> dtos, TourRequest tourRequest) {
@@ -252,6 +265,7 @@ public class TourRequestServiceImpl implements TourRequestService {
         dto.setSpecificRequirements(t.getSpecificRequirements());
         dto.setSpecialConcerns(t.getSpecialConcerns());
         dto.setPaymentTerm(t.getPaymentTerm().name());
+        dto.setAdvancePercentage(t.getAdvancePercentage());
         dto.setStatus(t.getStatus().name());
         dto.setCreatedAt(t.getCreatedAt());
         dto.setUpdatedAt(t.getUpdatedAt());
