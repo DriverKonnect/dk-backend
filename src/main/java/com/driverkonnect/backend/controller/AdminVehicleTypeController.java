@@ -53,6 +53,7 @@ public class AdminVehicleTypeController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TOUR_COMPANY')")
     @Operation(summary = "Get a vehicle type by ID")
     public ResponseEntity<Response<VehicleTypeResponseDto>> getById(
             @Parameter(description = "Vehicle type ID") @PathVariable Long id) {

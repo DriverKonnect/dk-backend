@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/driver/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tour-company/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/vehicle-types", "/api/admin/vehicle-types/**")
+                        .hasAnyRole("ADMIN", "TOUR_COMPANY")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/swagger-ui/**",
