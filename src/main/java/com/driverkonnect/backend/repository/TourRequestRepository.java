@@ -18,21 +18,21 @@ public interface TourRequestRepository extends JpaRepository<TourRequest, Long> 
         value = """
             SELECT t FROM TourRequest t
             WHERE t.tourCompany.id = :companyId
-            AND t.status = COALESCE(:status, t.status)
+            AND t.status IN :statuses
             AND t.startDate >= COALESCE(:dateFrom, t.startDate)
             AND t.startDate <= COALESCE(:dateTo, t.startDate)
             """,
         countQuery = """
             SELECT COUNT(t) FROM TourRequest t
             WHERE t.tourCompany.id = :companyId
-            AND t.status = COALESCE(:status, t.status)
+            AND t.status IN :statuses
             AND t.startDate >= COALESCE(:dateFrom, t.startDate)
             AND t.startDate <= COALESCE(:dateTo, t.startDate)
             """
     )
     Page<TourRequest> findByCompanyWithFilters(
             @Param("companyId") Long companyId,
-            @Param("status") TourStatus status,
+            @Param("statuses") List<TourStatus> statuses,
             @Param("dateFrom") LocalDate dateFrom,
             @Param("dateTo") LocalDate dateTo,
             Pageable pageable

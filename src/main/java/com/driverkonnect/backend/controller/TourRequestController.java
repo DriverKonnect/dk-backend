@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -48,13 +49,14 @@ public class TourRequestController {
     @Operation(
             summary = "List own tour requests",
             description = "Returns a paginated list of tour requests belonging to the authenticated tour company. " +
-                    "Supports optional filtering by status (DRAFT, PUBLISHED, ASSIGNED, COMPLETED, CANCELLED) " +
+                    "Supports optional filtering by one or more statuses (DRAFT, PUBLISHED, ASSIGNED, COMPLETED, CANCELLED) " +
                     "and by date range (dateFrom/dateTo filter on the tour's start date). " +
                     "Results include driver name, star rating (1–5), payment amount, and payment status where available. " +
                     "Ordered by creation date descending."
     )
     public ResponseEntity<Response<PagedResponseDto<TourRequestSummaryDto>>> getMyTours(
-            @Parameter(description = "Filter by tour status") @RequestParam(required = false) TourStatus status,
+            @Parameter(description = "Filter by tour status (repeat the param to filter by multiple statuses)")
+            @RequestParam(required = false) List<TourStatus> status,
             @Parameter(description = "Filter tours with start date on or after this date (ISO format: yyyy-MM-dd)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @Parameter(description = "Filter tours with start date on or before this date (ISO format: yyyy-MM-dd)")

@@ -66,12 +66,16 @@ public class TourRequestServiceImpl implements TourRequestService {
     @Override
     @Transactional
     public PagedResponseDto<TourRequestSummaryDto> getMyTours(
-            TourStatus status, LocalDate dateFrom, LocalDate dateTo, int page, int size) {
+            List<TourStatus> statuses, LocalDate dateFrom, LocalDate dateTo, int page, int size) {
         TourCompanyProfile company = resolveCurrentCompany();
+
+        List<TourStatus> statusFilter = (statuses == null || statuses.isEmpty())
+                ? List.of(TourStatus.values())
+                : statuses;
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<TourRequest> tourPage = tourRequestRepository.findByCompanyWithFilters(
-                company.getId(), status, dateFrom, dateTo, pageable);
+                company.getId(), statusFilter, dateFrom, dateTo, pageable);
 
         List<Long> tourIds = tourPage.getContent().stream().map(TourRequest::getId).toList();
         Map<Long, TourAssignment> assignmentMap = tourAssignmentRepository

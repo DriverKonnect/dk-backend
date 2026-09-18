@@ -7,10 +7,11 @@ import com.driverkonnect.backend.enums.TourStatus;
 import com.driverkonnect.backend.generics.PagedResponseDto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface TourRequestService {
     TourRequestResponseDto create(TourRequestDto dto);
-    PagedResponseDto<TourRequestSummaryDto> getMyTours(TourStatus status, LocalDate dateFrom, LocalDate dateTo, int page, int size);
+    PagedResponseDto<TourRequestSummaryDto> getMyTours(List<TourStatus> statuses, LocalDate dateFrom, LocalDate dateTo, int page, int size);
     TourRequestResponseDto getById(Long id);
     TourRequestResponseDto update(Long id, TourRequestDto dto);
     TourRequestResponseDto publish(Long id);
