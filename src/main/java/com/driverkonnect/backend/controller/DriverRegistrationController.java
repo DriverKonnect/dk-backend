@@ -10,6 +10,9 @@ import com.driverkonnect.backend.service.AccountService;
 import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.service.DriverRegistrationService;
 import com.driverkonnect.backend.util.ResponseUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,7 @@ import java.time.Duration;
 @Slf4j
 @RestController
 @RequestMapping("/api/driver")
+@Tag(name = "Driver - Registration", description = "Driver sign-up, document upload, password update, and application status lookup for the applicant.")
 public class DriverRegistrationController {
 
     private final DriverRegistrationService driverRegistrationService;
@@ -47,6 +51,10 @@ public class DriverRegistrationController {
     }
 
     @PostMapping("/register")
+    @Operation(
+            summary = "Register a new driver",
+            description = "Submits a new driver registration application, then automatically logs the driver in and sets access/refresh token cookies. Returns 409 if the email is already registered."
+    )
     public ResponseEntity<Response<DriverApplicationResponseDto>> register(
             @Valid @RequestBody DriverRegisterRequestDto request,
             HttpServletResponse response) {
@@ -61,8 +69,12 @@ public class DriverRegistrationController {
 
     @PostMapping(value = "/register/{applicationId}/documents",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "Upload driver registration documents",
+            description = "Uploads the three required documents (licence front, licence back, police clearance) for a driver application, moving it into under-review status. Returns 404 if no application exists with the given ID."
+    )
     public ResponseEntity<Response<DriverApplicationResponseDto>> uploadDocuments(
-            @PathVariable Long applicationId,
+            @Parameter(description = "Driver application ID") @PathVariable Long applicationId,
             @RequestParam("licenceFront") MultipartFile licenceFront,
             @RequestParam("licenceBack") MultipartFile licenceBack,
             @RequestParam("policeClearance") MultipartFile policeClearance) {
@@ -74,6 +86,10 @@ public class DriverRegistrationController {
     }
 
     @PutMapping("/password")
+    @Operation(
+            summary = "Update driver password",
+            description = "Updates the authenticated driver's account password."
+    )
     public ResponseEntity<Response<String>> updatePassword(
             @Valid @RequestBody PasswordUpdateRequestDto request) {
         log.info("Received request to update driver password");
@@ -83,6 +99,10 @@ public class DriverRegistrationController {
     }
 
     @GetMapping("/application/me")
+    @Operation(
+            summary = "Get my registration application",
+            description = "Retrieves the authenticated driver's own registration application and its current status."
+    )
     public ResponseEntity<Response<DriverApplicationResponseDto>> getMyApplication() {
         log.info("Received request to retrieve driver's own application");
         DriverApplicationResponseDto result = driverRegistrationService.getMyApplication();

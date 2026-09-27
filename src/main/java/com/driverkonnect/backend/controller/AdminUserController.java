@@ -6,6 +6,9 @@ import com.driverkonnect.backend.dto.response.admin.AdminUserResponseDto;
 import com.driverkonnect.backend.generics.Response;
 import com.driverkonnect.backend.service.AdminUserService;
 import com.driverkonnect.backend.util.ResponseUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +23,16 @@ import java.util.List;
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Admin - Users", description = "Manage admin user accounts, including creation and activation status.")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
     @GetMapping
+    @Operation(
+            summary = "List all admin users",
+            description = "Returns every admin user account in the system, including their active status."
+    )
     public ResponseEntity<Response<List<AdminUserResponseDto>>> getAllAdminUsers() {
         log.info("Received request to retrieve all admin users");
         List<AdminUserResponseDto> result = adminUserService.getAllAdminUsers();
@@ -33,6 +41,10 @@ public class AdminUserController {
     }
 
     @PostMapping
+    @Operation(
+            summary = "Create an admin user",
+            description = "Creates a new admin user account. Returns 409 if the email is already registered."
+    )
     public ResponseEntity<Response<AdminUserResponseDto>> createAdminUser(
             @Valid @RequestBody CreateAdminUserRequestDto request) {
         log.info("Received request to create a new admin user");
@@ -42,8 +54,12 @@ public class AdminUserController {
     }
 
     @PutMapping("/{userId}/status")
+    @Operation(
+            summary = "Update an admin user's active status",
+            description = "Activates or deactivates an admin user account. Returns 404 if no admin user exists with the given ID."
+    )
     public ResponseEntity<Response<AdminUserResponseDto>> updateAdminStatus(
-            @PathVariable Long userId,
+            @Parameter(description = "Admin user ID") @PathVariable Long userId,
             @Valid @RequestBody UpdateAdminStatusRequestDto request) {
         log.info("Received request to update active status for admin user ID: {}", userId);
         AdminUserResponseDto result = adminUserService.updateAdminStatus(userId, request);

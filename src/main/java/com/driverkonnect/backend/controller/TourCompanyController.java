@@ -10,6 +10,8 @@ import com.driverkonnect.backend.service.AccountService;
 import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.service.TourCompanyService;
 import com.driverkonnect.backend.util.ResponseUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import java.time.Duration;
 @Slf4j
 @RestController
 @RequestMapping("/api/tour-company")
+@Tag(name = "Tour Company - Registration & Profile", description = "Tour company sign-up, profile view, and password update.")
 public class TourCompanyController {
 
     private final TourCompanyService tourCompanyService;
@@ -45,6 +48,10 @@ public class TourCompanyController {
     }
 
     @PostMapping("/register")
+    @Operation(
+            summary = "Register a new tour company",
+            description = "Registers a new tour company account, then automatically logs the company in and sets access/refresh token cookies. Returns 409 if the email is already registered."
+    )
     public ResponseEntity<Response<TourCompanyProfileResponseDto>> register(
             @Valid @RequestBody TourCompanyRegisterRequestDto request,
             HttpServletResponse response) {
@@ -58,6 +65,10 @@ public class TourCompanyController {
     }
 
     @GetMapping("/profile/me")
+    @Operation(
+            summary = "Get my company profile",
+            description = "Retrieves the authenticated tour company's own profile."
+    )
     public ResponseEntity<Response<TourCompanyProfileResponseDto>> getMyProfile() {
         log.info("Received request to retrieve tour company profile");
         TourCompanyProfileResponseDto result = tourCompanyService.getMyProfile();
@@ -66,6 +77,10 @@ public class TourCompanyController {
     }
 
     @PutMapping("/password")
+    @Operation(
+            summary = "Update company password",
+            description = "Updates the authenticated tour company's account password."
+    )
     public ResponseEntity<Response<String>> updatePassword(
             @Valid @RequestBody PasswordUpdateRequestDto request) {
         log.info("Received request to update tour company password");
