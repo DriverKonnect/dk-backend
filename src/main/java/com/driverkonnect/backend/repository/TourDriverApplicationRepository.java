@@ -11,4 +11,5 @@ public interface TourDriverApplicationRepository extends JpaRepository<TourDrive
     List<TourDriverApplication> findByDriver_EmailOrderByAppliedAtDesc(String driverEmail);
     List<TourDriverApplication> findByTourRequest_IdOrderByAppliedAtDesc(Long tourRequestId);
     Optional<TourDriverApplication> findByIdAndDriver_Email(Long id, String driverEmail);
+    long countByDriver_EmailAndIsWithdrawnFalse(String driverEmail);
 }

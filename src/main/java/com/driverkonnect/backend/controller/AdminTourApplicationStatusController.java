@@ -53,7 +53,10 @@ public class AdminTourApplicationStatusController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get a tour application status by ID")
+    @Operation(
+            summary = "Get a tour application status by ID",
+            description = "Retrieves a single tour application status by its ID. Returns 404 if no status exists with the given ID."
+    )
     public ResponseEntity<Response<TourApplicationStatusResponseDto>> getById(
             @Parameter(description = "Status ID") @PathVariable Long id) {
         log.info("Received request to retrieve tour application status ID: {}", id);

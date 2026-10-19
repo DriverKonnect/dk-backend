@@ -2,12 +2,15 @@ package com.driverkonnect.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,6 +28,13 @@ public class TourDriverApplication {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
     private User driver;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_vehicle_id")
+    private DriverVehicle driverVehicle;
+
+    @Column(name = "per_km_rate_snapshot", precision = 10, scale = 2)
+    private BigDecimal perKmRateSnapshot;
 
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;

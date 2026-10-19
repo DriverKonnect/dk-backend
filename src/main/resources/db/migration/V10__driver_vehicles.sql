@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS driver_vehicles (
+    id                  BIGSERIAL PRIMARY KEY,
+    driver_id           BIGINT        NOT NULL REFERENCES users(id),
+    brand               VARCHAR(100)  NOT NULL,
+    model               VARCHAR(100)  NOT NULL,
+    year                INTEGER       NOT NULL,
+    mileage_km          INTEGER       NOT NULL,
+    vehicle_category    VARCHAR(50)   NOT NULL,
+    per_km_rate         DECIMAL(10,2) NOT NULL,
+    approval_status     VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
+    rejection_reason    TEXT,
+    photo_front_url     VARCHAR(500),
+    photo_back_url      VARCHAR(500),
+    photo_side_url      VARCHAR(500),
+    photo_interior_url  VARCHAR(500),
+    vehicle_licence_url VARCHAR(500),
+    insurance_url       VARCHAR(500),
+    insurance_expiry    DATE,
+    is_active           BOOLEAN       NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMP,
+    updated_at          TIMESTAMP
+);

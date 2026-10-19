@@ -53,7 +53,10 @@ public class AdminVehicleTypeController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get a vehicle type by ID")
+    @Operation(
+            summary = "Get a vehicle type by ID",
+            description = "Retrieves a single vehicle type by its ID. Returns 404 if no vehicle type exists with the given ID."
+    )
     public ResponseEntity<Response<VehicleTypeResponseDto>> getById(
             @Parameter(description = "Vehicle type ID") @PathVariable Long id) {
         log.info("Received request to retrieve vehicle type ID: {}", id);

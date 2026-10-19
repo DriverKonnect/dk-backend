@@ -1,6 +1,8 @@
 package com.driverkonnect.backend.controller;
 
 import com.driverkonnect.backend.dto.request.driver.ApplyForTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverActiveTourDto;
+import com.driverkonnect.backend.dto.response.driver.DriverHistorySummaryDto;
 import com.driverkonnect.backend.dto.response.driver.TourApplicationResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestResponseDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourRequestSummaryDto;
@@ -10,6 +12,7 @@ import com.driverkonnect.backend.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -55,14 +58,13 @@ public class DriverTourController {
     @PostMapping("/{id}/apply")
     @Operation(
             summary = "Apply for a tour",
-            description = "Submits an application for the specified published tour. An optional note can be included. Returns 409 if the driver has already applied and not withdrawn. Returns 400 if the tour is not in PUBLISHED status."
+            description = "Submits an application for the specified published tour. Requires the ID of an approved vehicle from the driver's fleet. The vehicle's per-km rate is snapshotted at application time. An optional note can be included. Returns 400 if the vehicle is not approved or the tour is not published. Returns 409 if the driver has already applied and not withdrawn."
     )
     public ResponseEntity<Response<TourApplicationResponseDto>> apply(
             @Parameter(description = "Tour request ID") @PathVariable Long id,
-            @RequestBody(required = false) ApplyForTourDto request) {
+            @Valid @RequestBody ApplyForTourDto request) {
         log.info("Received request to apply for tour ID: {}", id);
-        TourApplicationResponseDto result = tourApplicationService.apply(id,
-                request != null ? request : new ApplyForTourDto());
+        TourApplicationResponseDto result = tourApplicationService.apply(id, request);
         log.info("Successfully applied for tour ID: {}, application ID: {}", id, result.getId());
         return ResponseUtil.created(result, "Application submitted successfully");
     }
@@ -77,6 +79,43 @@ public class DriverTourController {
         List<TourApplicationResponseDto> result = tourApplicationService.getMyApplications();
         log.info("Successfully retrieved {} tour applications", result.size());
         return ResponseUtil.success(result, "Applications retrieved successfully");
+    }
+
+    @GetMapping("/history")
+    @Operation(
+            summary = "Get tour history",
+            description = "Returns a paginated list of the driver's completed and cancelled tours, plus lifetime stats: total earned (sum of estimatedKm × per-km rate for completed tours), completed count, and average rating. Ordered by assignment date descending."
+    )
+    public ResponseEntity<Response<DriverHistorySummaryDto>> getMyHistory(
+            @Parameter(description = "Page number (0-indexed, default 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size (default 10)") @RequestParam(defaultValue = "10") int size) {
+        log.info("Driver requesting tour history — page={}, size={}", page, size);
+        DriverHistorySummaryDto result = tourApplicationService.getMyHistory(page, size);
+        return ResponseUtil.success(result, "Tour history retrieved successfully");
+    }
+
+    @GetMapping("/active")
+    @Operation(
+            summary = "Get active tour",
+            description = "Returns the driver's currently active tour — one in ASSIGNED or IN_PROGRESS status. Includes full location list, estimated earnings (estimatedKm × per-km rate), and payment details. Returns 404 if the driver has no active tour."
+    )
+    public ResponseEntity<Response<DriverActiveTourDto>> getMyActiveTour() {
+        log.info("Driver requesting active tour");
+        DriverActiveTourDto result = tourApplicationService.getMyActiveTour();
+        return ResponseUtil.success(result, "Active tour retrieved successfully");
+    }
+
+    @PatchMapping("/{id}/start")
+    @Operation(
+            summary = "Mark tour as started",
+            description = "Transitions the assigned tour to IN_PROGRESS status, indicating the driver has begun the tour. Only works when the tour is in ASSIGNED status — returns 400 if already started or not assigned to this driver."
+    )
+    public ResponseEntity<Response<DriverActiveTourDto>> startTour(
+            @Parameter(description = "Tour request ID") @PathVariable Long id) {
+        log.info("Driver marking tour ID: {} as started", id);
+        DriverActiveTourDto result = tourApplicationService.startTour(id);
+        log.info("Tour ID: {} marked as IN_PROGRESS", id);
+        return ResponseUtil.success(result, "Tour started successfully");
     }
 
     @PatchMapping("/applications/{applicationId}/withdraw")

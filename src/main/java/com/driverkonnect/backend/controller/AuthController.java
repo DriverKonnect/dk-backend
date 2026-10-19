@@ -7,6 +7,8 @@ import com.driverkonnect.backend.exception.CustomException;
 import com.driverkonnect.backend.generics.Response;
 import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.util.ResponseUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,6 +27,7 @@ import java.time.Duration;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Login, token refresh, and logout for all account types. Access and refresh tokens are issued as HttpOnly cookies.")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,6 +39,10 @@ public class AuthController {
     private long refreshExpiration;
 
     @PostMapping("/login")
+    @Operation(
+            summary = "Log in",
+            description = "Authenticates a user by email and password. On success, sets httpOnly access/refresh token cookies and returns the authenticated user's details. Returns 401 for invalid credentials."
+    )
     public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request,
                                                   HttpServletResponse response) {
         log.info("Received request to log in user");
@@ -46,6 +53,10 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(
+            summary = "Refresh access token",
+            description = "Reads the refresh token cookie and issues a new access/refresh token pair, resetting the cookies. Returns 400 if the refresh token cookie is missing, or 401 if it is invalid or expired."
+    )
     public ResponseEntity<AuthResponseDto> refresh(HttpServletRequest request,
                                                     HttpServletResponse response) {
         log.info("Received request to refresh access token");
@@ -57,6 +68,10 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(
+            summary = "Log out",
+            description = "Invalidates the refresh token server-side and clears the access/refresh token cookies."
+    )
     public ResponseEntity<Response<String>> logout(HttpServletRequest request,
                                                     HttpServletResponse response) {
         log.info("Received request to log out user");
