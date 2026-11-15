@@ -1,5 +1,6 @@
 package com.driverkonnect.backend.entity;
 
+import com.driverkonnect.backend.enums.TourCompanyStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,6 +37,20 @@ public class TourCompanyProfile {
 
     @Column(name = "phone", nullable = false)
     private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TourCompanyStatus status;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by")
+    private User reviewedBy;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

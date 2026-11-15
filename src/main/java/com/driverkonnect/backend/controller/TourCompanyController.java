@@ -1,67 +1,41 @@
 package com.driverkonnect.backend.controller;
 
 import com.driverkonnect.backend.dto.request.account.PasswordUpdateRequestDto;
-import com.driverkonnect.backend.dto.request.auth.LoginRequestDto;
 import com.driverkonnect.backend.dto.request.tourcompany.TourCompanyRegisterRequestDto;
-import com.driverkonnect.backend.dto.response.auth.TokenPairDto;
 import com.driverkonnect.backend.dto.response.tourcompany.TourCompanyProfileResponseDto;
 import com.driverkonnect.backend.generics.Response;
 import com.driverkonnect.backend.service.AccountService;
-import com.driverkonnect.backend.service.AuthService;
 import com.driverkonnect.backend.service.TourCompanyService;
 import com.driverkonnect.backend.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Duration;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/tour-company")
-@Tag(name = "Tour Company - Registration & Profile", description = "Tour company sign-up, profile view, and password update.")
+@RequiredArgsConstructor
+@Tag(name = "Tour Company - Registration & Profile", description = "Tour company registration requests (subject to admin approval), profile view, and password update.")
 public class TourCompanyController {
 
     private final TourCompanyService tourCompanyService;
-    private final AuthService authService;
     private final AccountService accountService;
-
-    @Value("${app.jwt.expiration}")
-    private long jwtExpiration;
-
-    @Value("${app.jwt.refresh-expiration}")
-    private long refreshExpiration;
-
-    public TourCompanyController(TourCompanyService tourCompanyService,
-                                 AuthService authService,
-                                 AccountService accountService) {
-        this.tourCompanyService = tourCompanyService;
-        this.authService = authService;
-        this.accountService = accountService;
-    }
 
     @PostMapping("/register")
     @Operation(
-            summary = "Register a new tour company",
-            description = "Registers a new tour company account, then automatically logs the company in and sets access/refresh token cookies. Returns 409 if the email is already registered."
+            summary = "Submit a tour company registration request",
+            description = "Submits a tour company registration for admin review. The account is created in PENDING status and cannot log in until an admin approves it. A previously REJECTED registration can be resubmitted with the same email/BRN. Returns 409 if the email or business registration number is already in use by a pending, approved, or deactivated company."
     )
     public ResponseEntity<Response<TourCompanyProfileResponseDto>> register(
-            @Valid @RequestBody TourCompanyRegisterRequestDto request,
-            HttpServletResponse response) {
-        log.info("Received request to register a new tour company");
+            @Valid @RequestBody TourCompanyRegisterRequestDto request) {
+        log.info("Received tour company registration request");
         TourCompanyProfileResponseDto result = tourCompanyService.register(request);
-        TokenPairDto tokens = authService.login(
-                new LoginRequestDto(request.getEmail(), request.getPassword()));
-        setTokenCookies(response, tokens.getAccessToken(), tokens.getRefreshToken());
-        log.info("Successfully registered tour company with profile ID: {}", result.getId());
-        return ResponseUtil.created(result, "Tour company registered successfully");
+        log.info("Tour company registration ID: {} submitted with status {}", result.getId(), result.getStatus());
+        return ResponseUtil.created(result, "Registration submitted. Awaiting admin approval.");
     }
 
     @GetMapping("/profile/me")
@@ -87,22 +61,5 @@ public class TourCompanyController {
         accountService.updatePassword(request);
         log.info("Successfully updated tour company password");
         return ResponseUtil.success(null, "Password updated successfully. Please log in again.");
-    }
-
-    private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                buildCookie("accessToken", accessToken, jwtExpiration / 1000).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                buildCookie("refreshToken", refreshToken, refreshExpiration / 1000).toString());
-    }
-
-    private ResponseCookie buildCookie(String name, String value, long maxAgeSeconds) {
-        return ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(Duration.ofSeconds(maxAgeSeconds))
-                .build();
     }
 }
