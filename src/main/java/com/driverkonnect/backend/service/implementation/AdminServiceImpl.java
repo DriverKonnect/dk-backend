@@ -100,11 +100,12 @@ public class AdminServiceImpl implements AdminService {
             throw new CustomException("Driver account is already deactivated", 400);
         }
 
+        // Revoke tokens first: deleteKeyByUsername only resolves active users.
+        refreshTokenService.deleteKeyByUsername(user.getUsername());
+
         user.setIsActive(false);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-
-        refreshTokenService.deleteKeyByUsername(user.getUsername());
         log.debug("Driver account deactivated for application ID: {}, user: {}", applicationId, user.getEmail());
 
         return toDetailDto(application);
