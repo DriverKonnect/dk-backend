@@ -1,0 +1,542 @@
+{
+  "info": {
+    "name": "DK - Tour Company Approval Workflow",
+    "description": "End-to-end test of tour company registration -> admin approval.\n\nAuth is cookie based (accessToken/refreshToken httpOnly cookies). Postman's cookie jar stores them automatically after a successful login, so every 'Login as ...' request switches the active user. A FAILED login (403/401) does not touch the cookies, so the previously logged-in user stays active.\n\nSetup: set adminEmail / adminPassword in the collection Variables tab to an existing ADMIN account. companyEmail / brn are generated fresh on each run by '1.1 Register'.\n\nRun the folders top to bottom (or use Collection Runner on the whole collection).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "adminEmail", "value": "admin@example.com" },
+    { "key": "adminPassword", "value": "changeme" },
+    { "key": "companyEmail", "value": "" },
+    { "key": "companyPassword", "value": "SecurePass123" },
+    { "key": "brn", "value": "" },
+    { "key": "companyId", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Registration",
+      "item": [
+        {
+          "name": "1.1 Register tour company (new) -> 201 PENDING",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('companyEmail', `company${suffix}@test.local`);",
+                  "pm.collectionVariables.set('brn', `PV${suffix}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('status is PENDING', () => pm.expect(body.data.status).to.eql('PENDING'));",
+                  "pm.test('no auth cookies set', () => pm.expect(pm.response.headers.has('Set-Cookie')).to.be.false);",
+                  "pm.collectionVariables.set('companyId', body.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tour-company/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Island Tours (Pvt) Ltd\",\n  \"businessRegistrationNumber\": \"{{brn}}\",\n  \"contactPersonFirstName\": \"Nimal\",\n  \"contactPersonLastName\": \"Silva\",\n  \"email\": \"{{companyEmail}}\",\n  \"phone\": \"+94771234567\",\n  \"password\": \"{{companyPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1.2 Register duplicate (pending) -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('409 Conflict', () => pm.response.to.have.status(409));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tour-company/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Island Tours (Pvt) Ltd\",\n  \"businessRegistrationNumber\": \"{{brn}}\",\n  \"contactPersonFirstName\": \"Nimal\",\n  \"contactPersonLastName\": \"Silva\",\n  \"email\": \"{{companyEmail}}\",\n  \"phone\": \"+94771234567\",\n  \"password\": \"{{companyPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1.3 Company login while pending -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('pending message', () => pm.expect(pm.response.json().message).to.include('pending'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"{{companyPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "1.4 Company login wrong password -> 401 (status not leaked)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"WrongPassword1\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Admin review - reject & resubmit",
+      "item": [
+        {
+          "name": "2.1 Login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "2.2 List PENDING companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().data.content.map(c => c.id);",
+                  "pm.test('new company is listed', () => pm.expect(ids).to.include(Number(pm.collectionVariables.get('companyId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tour-companies?status=PENDING&page=0&size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "tour-companies"],
+              "query": [
+                { "key": "status", "value": "PENDING" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.3 List all companies (no filter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tour-companies?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "tour-companies"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.4 Get company by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('isActive false', () => pm.expect(pm.response.json().data.isActive).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}" }
+        },
+        {
+          "name": "2.5 Reject with reason -> REJECTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('status REJECTED', () => pm.expect(pm.response.json().data.status).to.eql('REJECTED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/reject",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"BRN could not be verified\"\n}" }
+          }
+        },
+        {
+          "name": "2.6 Reject again (not pending) -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/reject" }
+        },
+        {
+          "name": "2.7 Company login while rejected -> 403 with reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('shows rejection reason', () => pm.expect(pm.response.json().message).to.include('BRN could not be verified'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"{{companyPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "2.8 Resubmit (same email/BRN) -> 201 PENDING, same id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('status PENDING', () => pm.expect(data.status).to.eql('PENDING'));",
+                  "pm.test('same id', () => pm.expect(data.id).to.eql(Number(pm.collectionVariables.get('companyId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tour-company/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Island Tours (Pvt) Ltd - Updated\",\n  \"businessRegistrationNumber\": \"{{brn}}\",\n  \"contactPersonFirstName\": \"Nimal\",\n  \"contactPersonLastName\": \"Silva\",\n  \"email\": \"{{companyEmail}}\",\n  \"phone\": \"+94771234567\",\n  \"password\": \"{{companyPassword}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Approve",
+      "item": [
+        {
+          "name": "3.1 Approve -> APPROVED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('status APPROVED', () => pm.expect(data.status).to.eql('APPROVED'));",
+                  "pm.test('isActive true', () => pm.expect(data.isActive).to.be.true);",
+                  "pm.test('reviewedByEmail set', () => pm.expect(data.reviewedByEmail).to.not.be.null);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/approve" }
+        },
+        {
+          "name": "3.2 Approve again -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/approve" }
+        },
+        {
+          "name": "3.3 Company login -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"{{companyPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "3.4 Company - get my profile -> 200 APPROVED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('status APPROVED', () => pm.expect(pm.response.json().data.status).to.eql('APPROVED'));"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tour-company/profile/me" }
+        },
+        {
+          "name": "3.5 Company calls admin API -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/tour-companies" }
+        }
+      ]
+    },
+    {
+      "name": "4. Deactivate & reactivate",
+      "item": [
+        {
+          "name": "4.1 Login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "4.2 Reactivate while approved -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/reactivate" }
+        },
+        {
+          "name": "4.3 Deactivate -> DEACTIVATED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('status DEACTIVATED', () => pm.expect(data.status).to.eql('DEACTIVATED'));",
+                  "pm.test('isActive false', () => pm.expect(data.isActive).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/deactivate" }
+        },
+        {
+          "name": "4.4 Approve while deactivated -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/approve" }
+        },
+        {
+          "name": "4.5 Company login while deactivated -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('deactivated message', () => pm.expect(pm.response.json().message).to.include('deactivated'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"{{companyPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "4.6 Reactivate -> APPROVED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('status APPROVED', () => pm.expect(pm.response.json().data.status).to.eql('APPROVED'));"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/tour-companies/{{companyId}}/reactivate" }
+        },
+        {
+          "name": "4.7 Company login after reactivation -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{companyEmail}}\",\n  \"password\": \"{{companyPassword}}\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Misc",
+      "item": [
+        {
+          "name": "5.1 Login as admin",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "5.2 Get non-existent company -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/tour-companies/999999999" }
+        },
+        {
+          "name": "5.3 Register with invalid body -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tour-company/register",
+            "body": { "mode": "raw", "raw": "{\n  \"companyName\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

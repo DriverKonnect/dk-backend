@@ -14,5 +14,6 @@ public class TourCompanyProfileResponseDto {
     private String contactPersonLastName;
     private String email;
     private String phone;
+    private String status;
     private LocalDateTime createdAt;
 }

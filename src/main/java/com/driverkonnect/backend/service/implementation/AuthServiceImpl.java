@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -32,11 +33,14 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final DriverApplicationRepository driverApplicationRepository;
     private final TourCompanyProfileRepository tourCompanyProfileRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public TokenPairDto login(LoginRequestDto request) {
         request.setEmail(request.getEmail().strip().toLowerCase());
         log.debug("Authenticating user with email: {}", request.getEmail());
+
+        rejectInactiveTourCompany(request);
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -81,6 +85,31 @@ public class AuthServiceImpl implements AuthService {
 
         refreshTokenService.deleteKeyByUsername(username);
         log.debug("Logout completed for user: {}", username);
+    }
+
+    /**
+     * Gives tour companies that are not yet approved (or are rejected/deactivated) a specific reason
+     * instead of the generic 401. Only revealed once the password matches, so it does not leak
+     * which emails are registered. Wrong password falls through to the normal 401 flow.
+     */
+    private void rejectInactiveTourCompany(LoginRequestDto request) {
+        userRepository.findByEmail(request.getEmail())
+                .filter(user -> "TOUR_COMPANY".equals(user.getUserRole().getRole()))
+                .filter(user -> !Boolean.TRUE.equals(user.getIsActive()))
+                .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                .flatMap(user -> tourCompanyProfileRepository.findByUser_Email(user.getEmail()))
+                .ifPresent(profile -> {
+                    log.warn("Login blocked for tour company {} with status {}",
+                            request.getEmail(), profile.getStatus());
+                    String message = switch (profile.getStatus()) {
+                        case PENDING -> "Your registration is pending admin approval";
+                        case REJECTED -> profile.getRejectionReason() != null
+                                ? "Your registration was rejected: " + profile.getRejectionReason()
+                                : "Your registration was rejected";
+                        case DEACTIVATED, APPROVED -> "Your account has been deactivated. Please contact support";
+                    };
+                    throw new CustomException(message, HttpStatus.FORBIDDEN.value());
+                });
     }
 
     private UserResponseDto toUserResponseDto(User user) {
